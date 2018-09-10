@@ -1,0 +1,5 @@
+Spring Boot 与dubbo整合的三种方式
+	1 导入Dubbo-starter 在application.properties配置属性
+		 使用@Service暴露服务 
+		 使用@Reference 引用服务
+		 注意使用注解基于注解的dubbo @EnableDubbo
