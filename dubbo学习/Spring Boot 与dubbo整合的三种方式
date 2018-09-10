@@ -2,4 +2,57 @@ Spring Boot 与dubbo整合的三种方式
 	1 导入Dubbo-starter 在application.properties配置属性
 		 使用@Service暴露服务 
 		 使用@Reference 引用服务
-		 注意使用注解基于注解的dubbo @EnableDubbo
+		 注意使用注解基于注解的dubbo @EnableDubbo 主要作用是开启扫描 相当于配置文件中的  dubbo.scan.base-packages
+	2  保留dubbo xml配置文件
+		@ImportResource(localtion="classpath:provide.xnl")
+	3 使用注解api的方式
+		将每一个组件手动创建到容器中
+
+		@Configuration
+public class DubboConfig {
+	@Bean
+    ProviderConfig providerConfig(){
+        ProviderConfig providerConfig=new ProviderConfig();
+        providerConfig.setTimeout(3000);
+        return providerConfig;
+    }
+    @Bean
+    ConsumerConfig consumerConfig(){
+        ConsumerConfig consumerConfig=new ConsumerConfig();
+        consumerConfig.setCheck(false);
+        consumerConfig.setTimeout(3000);
+        return consumerConfig;
+    }
+    @Bean
+    public MonitorConfig monitorConfig(){
+        MonitorConfig monitorConfig=new MonitorConfig();
+        monitorConfig.setProtocol("registry");
+        return monitorConfig;
+    }
+    @Bean
+    public ProtocolConfig protocolConfig(){
+        ProtocolConfig protocolConfig=new ProtocolConfig();
+        protocolConfig.setName("dubbo");
+        protocolConfig.setPort(20880);
+        return protocolConfig;
+    }
+    @Bean
+    public RegistryConfig registryConfig(){
+        RegistryConfig registryConfig=new RegistryConfig();
+        registryConfig.setProtocol("zookeeper");
+        registryConfig.setAddress("localhost");
+        registryConfig.setPort(2181);
+        return registryConfig;
+    }
+    @Bean
+    public ApplicationConfig applicationConfig(){
+        ApplicationConfig applicationConfig=new ApplicationConfig();
+        applicationConfig.setName("boot-user-service-providerConfig");
+        return applicationConfig;
+    }
+ }
+
+公共的配置 application  register  protocol 等采用configual  生产者 消费者 采用注解的方式
+需要开启扫描 @EnableDubbo
+
+@Reference(url = "lcoahost:20882") //直连
