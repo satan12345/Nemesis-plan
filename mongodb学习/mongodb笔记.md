@@ -109,20 +109,58 @@ db.users.update({name:"卡卡西"},{$unset:{skill:2}})
 db.users.update({name:"卡卡西"},{$set:{hobby:{citys:['AA','BB','CC'],movies:['A','B','C']}}})
 db.users.update({name:"宇智波鼬"},{$set:{hobby:{movies:['C','D','E']}}})
 
+//mongodb支持通过内嵌文档的属性查询 如果要查询内嵌文档 可以通过.的形式来匹配 如果要通过内嵌文档来对文档进行查询 此时属性必须使用引号
+db.users.find({'hobby.movies':"A"})
+db.users.find()
+//$push 用于向数组中添加一个新的元素
+//$addToSet  向数组中添加一个新元素  如果数组中已经存在该元素 则不会添加
+db.users.update({name:'宇智波鼬'},{$push:{'hobby.movies':'F'}})
+
+db.users.update({name:"宇智波鼬"},{$addToSet:{'hobby.movies':'G'}})
+
+db.users.deleteOne({"hobby.citys":"A"})
+
+db.users.find()
+
+db.users.remove()
+
+db.users.drop()
+for(var i=0;i<=20000;i++){
+db.numbers.insert({num:i});
+}
+var arr=[];
+for(var i=20001;i<=40000;i++){
+arr.push({'num':i});
+}
+db.numbers.insertMany(arr);
+db.numbers.count()
+
+db.numbers.find({num:500})
+db.numbers.find({num:{$eq:500}})
+db.numbers.find({num:{$gt:500}}).limit(30);
+
+db.numbers.find({num:{$lt:30}})
+
+db.numbers.find({num:{$gt:40,$lt:50}})
+
+db.numbers.find().limit(10);
+
+
+
+mongodb 会调整skip limit 的位置
+db.numbers.find().skip(10).limit(10);
+
+db.createCollection('wifeAndHusband')
 
 
 
 
 
+use study
+db.wifeAndHusband.insert({name:"黄蓉",husband:{name:"郭靖"}})
 
-
-
-
-
-
-
-
-
+db.wifeAndHusband.find()
+db.wifeAndHusband.find({"husband.name":"郭靖"},{"name"})
 
 
 
