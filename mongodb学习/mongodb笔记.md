@@ -162,6 +162,46 @@ db.wifeAndHusband.insert({name:"黄蓉",husband:{name:"郭靖"}})
 db.wifeAndHusband.find()
 db.wifeAndHusband.find({"husband.name":"郭靖"},{"name"})
 
+db.dept.find()
+查询工资小于2000的
+db.emp.find({sal:{$lt:2000}})
+
+查询工作在1000-2000之间的
+db.emp.find({sal:{$gt:1000,$lt:2000}})
+
+查询工资小于1000或者大于2500的
+
+db.emp.find({$or:[ {sal:{$lt:1000}}, {sal:{$gt:2500}} ]});
+
+查询财务部的所有员工
+var deptNo=db.dept.findOne({dname:"财务部"}).deptno
+
+db.emp.find({depno:deptNo})
+
+查询销售部所有员工
+
+var deptno=db.dept.findOne({dname:"销售部"}).deptno;
+db.emp.find({depno:deptno});
+
+查询mgr为7698的所有员工
+db.emp.find({mgr:7698});
+
+为所有薪资低于1000的员工增加薪资400元
+db.emp.update({sal:{$lt:1000}},{$inc:{sal:400}},{multi:true})
+db.emp.find()
+
+
+db.emp.find()
+1 表示升序号  2 表示降序
+db.emp.find().sort({sal:1})
+db.emp.find().sort({sal:-1})
+//skip  limit  sort 可以以任意顺序调用
+db.emp.find().sort({sal:-1,empno:-1})
+
+
+投影
+db.emp.find({},{ename:1,_id:0});
+
 
 
 
