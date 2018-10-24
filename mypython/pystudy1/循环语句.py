@@ -30,25 +30,42 @@
     求 100以内所有的奇数之和
 """
 
-total = 0
-i = 1
-while i <= 100:
-    if i % 2 != 0:
-        total += i
-    i += 1
-print('100以内所有的奇数之和为', total)
+# total = 0
+# i = 1
+# while i <= 100:
+#     if i % 2 != 0:
+#         total += i
+#     i += 1
+# print('100以内所有的奇数之和为', total)
 
 """
 求100以内所有7的倍数之和 以及个数
 """
 
-total = 0
-count = 0
-i = 0
-while i <= 100:
-    if i % 7 == 0:
-        total += i
-        count += 1
-    i += 1
+# total = 0
+# count = 0
+# i = 7
+# while i < 100:
+#     if i % 7 == 0:
+#         total += i
+#         count += 1
+#     i += 1
+#
+# # print('100以内所有7的倍数之和:%d,个数为:%d' % (total, count))
+# print('总和为', total, '总数为', count)
 
-print('100以内所有7的倍数之和:%d,个数为:%d' % (total, count))
+""""
+水先花数是指一个n位数(n>3) 他的每个位上的数字的n次幂之和等于他本身（例如:1**3+5**3+3**3=153）
+求1000以内所有的水仙花数
+"""
+num = 100
+while num < 1000:
+    # //取整除 - 向下取接近除数的整数
+    a = num // 100
+    b = num // 10 % 10
+    c = num % 10
+    # ** 幂 - 返回x的y次幂
+    if (a ** 3 + b ** 3 + c ** 3) == num:
+        print('水仙花数为:', num)
+
+    num += 1
