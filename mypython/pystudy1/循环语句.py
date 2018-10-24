@@ -18,9 +18,37 @@
         更新表达式 修改初始化变量的值
 """
 
+# i = 1
+# while i <= 10:
+#     print("i =", i)
+#     i += 1
+# else:
+#     print('终止循环')
+
+"""
+循环语句练习
+    求 100以内所有的奇数之和
+"""
+
+total = 0
 i = 1
-while i <= 10:
-    print("i =", i)
+while i <= 100:
+    if i % 2 != 0:
+        total += i
     i += 1
-else:
-    print('终止循环')
+print('100以内所有的奇数之和为', total)
+
+"""
+求100以内所有7的倍数之和 以及个数
+"""
+
+total = 0
+count = 0
+i = 0
+while i <= 100:
+    if i % 7 == 0:
+        total += i
+        count += 1
+    i += 1
+
+print('100以内所有7的倍数之和:%d,个数为:%d' % (total, count))
