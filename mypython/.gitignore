@@ -8,6 +8,7 @@ __pycache__/
 # C extensions
 *.so
 
+
 # Distribution / packaging
 .Python
 build/
@@ -104,5 +105,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-.idea/
+
+.idea/workspace.xml
+
 
