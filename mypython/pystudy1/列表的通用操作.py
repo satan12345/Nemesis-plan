@@ -46,3 +46,6 @@ print(student.count('孙悟空'))
 print(student.count('数量'))
 
 
+
+
+
