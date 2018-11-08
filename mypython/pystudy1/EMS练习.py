@@ -38,7 +38,8 @@ while True:
         index = 1
         for node in emps:
             if num == str(index):
-                del emps[index - 1]
+                # del emps[index - 1]
+                emps.pop(index - 1)
                 print('删除成功')
 
     elif result == '4':

@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c49b8d56-1f94-4463-b763-8330e07af178" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/pystudy1/EMS练习.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pystudy1/修改元素.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pystudy1/列表的方法.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pystudy1/遍历列表.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pystudy1/列表的通用操作.py" beforeDir="false" afterPath="$PROJECT_DIR$/pystudy1/列表的通用操作.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pystudy1/序列.py" beforeDir="false" afterPath="$PROJECT_DIR$/pystudy1/序列.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pystudy1/EMS练习.py" beforeDir="false" afterPath="$PROJECT_DIR$/pystudy1/EMS练习.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -94,15 +89,15 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="gitignore" value="16" />
-          <entry key="py" value="6751" />
-          <entry key="txt" value="5" />
+          <entry key="py" value="6766" />
+          <entry key="txt" value="14" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="Git file" value="16" />
-          <entry key="PLAIN_TEXT" value="5" />
-          <entry key="Python" value="6751" />
+          <entry key="PLAIN_TEXT" value="14" />
+          <entry key="Python" value="6766" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -128,8 +123,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pystudy1/EMS练习.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="218">
-              <caret line="41" column="20" lean-forward="true" selection-start-line="41" selection-start-column="20" selection-end-line="41" selection-end-column="20" />
+            <state relative-caret-position="197">
+              <caret line="34" column="9" selection-start-line="34" selection-start-column="9" selection-end-line="34" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -682,7 +677,14 @@
       <option name="project" value="LOCAL" />
       <updated>1541492484314</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="EMS的联系">
+      <created>1541561029047</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1541561029047</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TodoView">
@@ -696,6 +698,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49460045" visible="true" weight="0.20234291" />
       <window_info id="Structure" order="1" sideWeight="0.5053996" side_tool="true" weight="0.19808307" />
@@ -728,7 +731,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="序列的学习" />
-    <option name="LAST_COMMIT_MESSAGE" value="序列的学习" />
+    <MESSAGE value="EMS的联系" />
+    <option name="LAST_COMMIT_MESSAGE" value="EMS的联系" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -939,8 +943,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pystudy1/EMS练习.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="218">
-          <caret line="41" column="20" lean-forward="true" selection-start-line="41" selection-start-column="20" selection-end-line="41" selection-end-column="20" />
+        <state relative-caret-position="197">
+          <caret line="34" column="9" selection-start-line="34" selection-start-column="9" selection-end-line="34" selection-end-column="9" />
         </state>
       </provider>
     </entry>
