@@ -4,9 +4,11 @@
     <bookmark url="file://$PROJECT_DIR$/pystudy1/100以内所有的质数.py" line="21" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c49b8d56-1f94-4463-b763-8330e07af178" name="Default Changelist" comment="">
+    <list default="true" id="c49b8d56-1f94-4463-b763-8330e07af178" name="Default Changelist" comment="EMS的练习">
+      <change afterPath="$PROJECT_DIR$/pystudy1/range.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pystudy1/元组.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pystudy1/可变对象.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pystudy1/EMS练习.py" beforeDir="false" afterPath="$PROJECT_DIR$/pystudy1/EMS练习.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,6 +17,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
+    <SUITE FILE_PATH="coverage/mypython$range.coverage" NAME="range Coverage Results" MODIFIED="1541669417867" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/untitled$study1.coverage" NAME="study1 Coverage Results" MODIFIED="1537880099794" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/untitled$ifelseifelse.coverage" NAME="ifelseifelse Coverage Results" MODIFIED="1539763463342" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/mypython$99.coverage" NAME="99乘法表 Coverage Results" MODIFIED="1540380634132" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
@@ -22,7 +25,7 @@
     <SUITE FILE_PATH="coverage/untitled$boolean.coverage" NAME="boolean值和空值 Coverage Results" MODIFIED="1538208835415" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/mypython$break.coverage" NAME="break Coverage Results" MODIFIED="1540452970624" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/untitled$.coverage" NAME="循环语句 Coverage Results" MODIFIED="1540362755440" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
-    <SUITE FILE_PATH="coverage/mypython$.coverage" NAME="遍历列表 Coverage Results" MODIFIED="1541503839798" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
+    <SUITE FILE_PATH="coverage/mypython$.coverage" NAME="可变对象 Coverage Results" MODIFIED="1541727263999" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/untitled$ifelse.coverage" NAME="ifelse Coverage Results" MODIFIED="1539762742397" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/untitled$if.coverage" NAME="if条件语句练习 Coverage Results" MODIFIED="1540360168168" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
     <SUITE FILE_PATH="coverage/mypython$EMS.coverage" NAME="EMS练习 Coverage Results" MODIFIED="1541560567630" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pystudy1" />
@@ -89,87 +92,78 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="gitignore" value="16" />
-          <entry key="py" value="6766" />
-          <entry key="txt" value="14" />
+          <entry key="py" value="8525" />
+          <entry key="txt" value="16" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="Git file" value="16" />
-          <entry key="PLAIN_TEXT" value="14" />
-          <entry key="Python" value="6766" />
+          <entry key="PLAIN_TEXT" value="16" />
+          <entry key="Python" value="8525" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="cfg" value="1" />
           <entry key="gitignore" value="2" />
-          <entry key="py" value="22" />
-          <entry key="pyi" value="1" />
+          <entry key="py" value="26" />
+          <entry key="pyi" value="2" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Git file" value="2" />
           <entry key="Ini" value="1" />
-          <entry key="Python" value="22" />
-          <entry key="PythonStub" value="1" />
+          <entry key="Python" value="26" />
+          <entry key="PythonStub" value="2" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pystudy1/range.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="357">
+              <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pystudy1/元组.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-349">
+              <caret line="13" column="16" selection-start-line="13" selection-start-column="16" selection-end-line="13" selection-end-column="16" />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pystudy1/EMS练习.py">
+        <entry file="file://$PROJECT_DIR$/pystudy1/可变对象.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="197">
-              <caret line="34" column="9" selection-start-line="34" selection-start-column="9" selection-end-line="34" selection-end-column="9" />
+            <state relative-caret-position="134">
+              <caret line="50" column="17" selection-start-line="50" selection-start-column="17" selection-end-line="50" selection-end-column="17" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pystudy1/修改元素.py">
+        <entry file="file://$APPLICATION_HOME_DIR$/helpers/typeshed/stdlib/3/typing.pyi">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="28" column="19" lean-forward="true" selection-start-line="28" selection-start-column="19" selection-end-line="28" selection-end-column="19" />
+            <state relative-caret-position="177">
+              <caret line="344" column="8" selection-start-line="344" selection-start-column="8" selection-end-line="344" selection-end-column="8" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pystudy1/列表的通用操作.py">
+        <entry file="file://$USER_HOME$/.PyCharm2018.2/system/python_stubs/-1150083042/builtins.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-378">
-              <caret line="12" column="13" lean-forward="true" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pystudy1/关系运算符.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="12" lean-forward="true" selection-start-line="12" selection-end-line="12" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pystudy1/遍历列表.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="281">
-              <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pystudy1/序列.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1113">
-              <caret line="22" column="19" lean-forward="true" selection-start-line="22" selection-start-column="19" selection-end-line="22" selection-end-column="19" />
+            <state relative-caret-position="297">
+              <caret line="3694" column="34" lean-forward="true" selection-start-line="3694" selection-start-column="34" selection-end-line="3694" selection-end-column="34" />
             </state>
           </provider>
         </entry>
@@ -221,6 +215,9 @@
         <option value="$PROJECT_DIR$/pystudy1/列表的方法.py" />
         <option value="$PROJECT_DIR$/pystudy1/遍历列表.py" />
         <option value="$PROJECT_DIR$/pystudy1/EMS练习.py" />
+        <option value="$PROJECT_DIR$/pystudy1/range.py" />
+        <option value="$PROJECT_DIR$/pystudy1/元组.py" />
+        <option value="$PROJECT_DIR$/pystudy1/可变对象.py" />
       </list>
     </option>
   </component>
@@ -333,8 +330,8 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.EMS练习">
-    <configuration name="列表的通用操作" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python.可变对象">
+    <configuration name="元组" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="untitled" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -347,7 +344,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/列表的通用操作.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/元组.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -356,7 +353,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="修改元素" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="可变对象" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="untitled" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -369,29 +366,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/修改元素.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="列表的方法" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="untitled" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pystudy1" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/列表的方法.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/可变对象.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -642,20 +617,42 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="range" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="untitled" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/pystudy1" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pystudy1/range.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <list>
-      <item itemvalue="Python.列表的通用操作" />
-      <item itemvalue="Python.修改元素" />
-      <item itemvalue="Python.列表的方法" />
       <item itemvalue="Python.遍历列表" />
       <item itemvalue="Python.EMS练习" />
+      <item itemvalue="Python.range" />
+      <item itemvalue="Python.元组" />
+      <item itemvalue="Python.可变对象" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.可变对象" />
+        <item itemvalue="Python.元组" />
+        <item itemvalue="Python.range" />
         <item itemvalue="Python.EMS练习" />
         <item itemvalue="Python.遍历列表" />
-        <item itemvalue="Python.列表的方法" />
-        <item itemvalue="Python.修改元素" />
-        <item itemvalue="Python.列表的通用操作" />
       </list>
     </recent_temporary>
   </component>
@@ -684,7 +681,14 @@
       <option name="project" value="LOCAL" />
       <updated>1541561029047</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="EMS的练习">
+      <created>1541668648222</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1541668648222</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TodoView">
@@ -698,7 +702,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49460045" visible="true" weight="0.20234291" />
       <window_info id="Structure" order="1" sideWeight="0.5053996" side_tool="true" weight="0.19808307" />
@@ -732,7 +735,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="序列的学习" />
     <MESSAGE value="EMS的联系" />
-    <option name="LAST_COMMIT_MESSAGE" value="EMS的联系" />
+    <MESSAGE value="EMS的练习" />
+    <option name="LAST_COMMIT_MESSAGE" value="EMS的练习" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -892,13 +896,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.PyCharm2018.2/system/python_stubs/-1150083042/builtins.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="297">
-          <caret line="3655" column="30" lean-forward="true" selection-start-line="3655" selection-start-column="30" selection-end-line="3655" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pystudy1/列表的方法.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="189">
@@ -943,8 +940,43 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pystudy1/EMS练习.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="197">
-          <caret line="34" column="9" selection-start-line="34" selection-start-column="9" selection-end-line="34" selection-end-column="9" />
+        <state relative-caret-position="260">
+          <caret line="37" column="17" lean-forward="true" selection-start-line="37" selection-start-column="17" selection-end-line="37" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2018.2/system/python_stubs/-1150083042/builtins.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="297">
+          <caret line="3694" column="34" lean-forward="true" selection-start-line="3694" selection-start-column="34" selection-end-line="3694" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pystudy1/range.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="357">
+          <caret line="17" lean-forward="true" selection-start-line="17" selection-end-line="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pystudy1/元组.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-349">
+          <caret line="13" column="16" selection-start-line="13" selection-start-column="16" selection-end-line="13" selection-end-column="16" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$APPLICATION_HOME_DIR$/helpers/typeshed/stdlib/3/typing.pyi">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="177">
+          <caret line="344" column="8" selection-start-line="344" selection-start-column="8" selection-end-line="344" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pystudy1/可变对象.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="50" column="17" selection-start-line="50" selection-start-column="17" selection-end-line="50" selection-end-column="17" />
         </state>
       </provider>
     </entry>
