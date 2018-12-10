@@ -19,6 +19,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -114,24 +115,28 @@ public class ApacheCuraotrStudy {
                 .forPath(nodePath, bytes);
 
 
-
         curator.close();
         state = curator.getState();
         log.info("stat={}", state);
         log.info("s={}", s);
     }
-    
+
     @Test
-    public void testUpdateNode () throws Exception{
-        String nodePath = "/super/imooc0000000003";
-        byte[] bytes = "new data".getBytes();
-        Stat stat = curator.setData().withVersion(0).forPath(nodePath, bytes);
-        log.info("stat={}",stat);
-        curator.close();
+    public void testUpdateNode() throws Exception {
+        try {
+            String nodePath = "/super/imooc0000000003";
+            byte[] bytes = "new data".getBytes();
+            Stat stat = curator.setData().withVersion(0).forPath(nodePath, bytes);
+            log.info("stat={}", stat);
+        } finally {
+            curator.close();
+
+        }
 
     }
+
     @Test
-    public void testDeleteNode() throws Exception{
+    public void testDeleteNode() throws Exception {
         String nodePath = "/super/imooc0000000003";
         curator.delete().guaranteed()//解决边缘情况 当服务端删除了节点 而回送响应的时候发生失败
                 .deletingChildrenIfNeeded()//如果有子节点 就删除
@@ -139,6 +144,30 @@ public class ApacheCuraotrStudy {
                 .forPath(nodePath);
         log.info("删除节点");
 
+    }
+
+    @Test
+    public void testRead() throws Exception {
+        try {
+            //读取节点的数据
+            String path = "/super/imooc0000000002";
+            Stat stat=new Stat();
+            byte[] bytes = curator.getData()
+                    .storingStatIn(stat)
+                    .forPath(path);
+            log.info("读取到的数据为:{}", new String(bytes));
+            log.info("version={}",stat.getVersion());
+
+
+            List<String> list = curator.getChildren().forPath("/");
+            log.info("查询到子节点的数据为:{}",list);
+
+            Stat stat1 = curator.checkExists().forPath("/man1");
+            log.info("节点是否存在：{}",stat1!=null?"true":"false");
+
+        } finally {
+            curator.close();
+        }
     }
 }
 
