@@ -16,17 +16,21 @@ import org.apache.curator.retry.RetryUntilElapsed;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * @author jipeng
@@ -79,6 +83,8 @@ public class ApacheCuraotrStudy {
         curator = CuratorFrameworkFactory.builder()
                 .connectString(zkServerPath)
                 .sessionTimeoutMs(10000)
+                //权限认证
+                //.authorization(Lists.newArrayList(new AuthInfo("digest","huoying:kakaxi".getBytes())))
                 .retryPolicy(retryPolicy)
                 .namespace("person")
                 .build();
@@ -242,32 +248,76 @@ public class ApacheCuraotrStudy {
             currentData.forEach(x -> log.info("子节点路径为:{}数据为:{}", x.getPath(), new String(x.getData())));
         }
         //添加监听事件
-        pathChildrenCache.getListenable().addListener(new PathChildrenCacheListener() {
-            @Override
-            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                //初始化
-                if (PathChildrenCacheEvent.Type.INITIALIZED.equals(event.getType())) {
-                    log.info("子节点初始化成功");
-                } else if (PathChildrenCacheEvent.Type.CHILD_ADDED.equals(event.getType())) {
-                    ChildData data = event.getData();
-                    log.info("子节点添加:path={},data={}", data.getPath(), new String(data.getData()));
-                } else if (PathChildrenCacheEvent.Type.CHILD_REMOVED.equals(event.getType())) {
-                    log.info("删除子节点");
-                    ChildData data = event.getData();
-                    log.info("path={},data={}", data.getPath(), new String(data.getData()));
+        pathChildrenCache.getListenable().addListener((client, event) -> {
+            //初始化
+            if (PathChildrenCacheEvent.Type.INITIALIZED.equals(event.getType())) {
+                log.info("子节点初始化成功");
+            } else if (PathChildrenCacheEvent.Type.CHILD_ADDED.equals(event.getType())) {
+                ChildData data = event.getData();
+                log.info("子节点添加:path={},data={}", data.getPath(), new String(data.getData()));
+            } else if (PathChildrenCacheEvent.Type.CHILD_REMOVED.equals(event.getType())) {
+                log.info("删除子节点");
+                ChildData data = event.getData();
+                log.info("path={},data={}", data.getPath(), new String(data.getData()));
 
-                } else if (PathChildrenCacheEvent.Type.CHILD_UPDATED.equals(event.getType())) {
-                    log.info("子节点更新");
-                    ChildData data = event.getData();
-                    log.info("path={},data={}", data.getPath(), new String(data.getData()));
-
-                }
-
+            } else if (PathChildrenCacheEvent.Type.CHILD_UPDATED.equals(event.getType())) {
+                log.info("子节点更新");
+                ChildData data = event.getData();
+                log.info("path={},data={}", data.getPath(), new String(data.getData()));
 
             }
+
+
         });
 
         countDownLatch.await();
+    }
+    @Test
+    public void testAcl () throws Exception{
+        String path="/you";
+        byte[] data = "天照".getBytes();
+        Opera(new Function<CuratorFramework, Void>() {
+            @Override
+            public Void apply(CuratorFramework curatorFramework) {
+                try {
+                    String s = curatorFramework.create()
+                            .creatingParentContainersIfNeeded()
+                            .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                            .withACL(ZooDefs.Ids.OPEN_ACL_UNSAFE)
+                            .forPath(path, data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+
+            }
+        });
+    }
+    @Test
+    public void testUpdateAcl () throws Exception{
+        List<ACL> list= Lists.newArrayList();
+        Id id1=new Id("digest", DigestAuthenticationProvider.generateDigest("kakaxi:kakaxi"));
+        Id id2=new Id("digest", DigestAuthenticationProvider.generateDigest("mingren:mingren"));
+        list.add(new ACL(ZooDefs.Perms.ALL,id1));
+        list.add(new ACL(ZooDefs.Perms.READ,id2));
+        Opera(curator -> {
+            String path="/person/you0000000004";
+            try {
+                curator.setACL().withACL(list).forPath(path);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
+    }
+    private void Opera(Function<CuratorFramework,Void> function){
+          try {
+              Void apply = function.apply(curator);
+          }finally {
+                curator.close();
+              CuratorFrameworkState state = curator.getState();
+              log.info("status={}",state);
+          }
     }
 
 }
