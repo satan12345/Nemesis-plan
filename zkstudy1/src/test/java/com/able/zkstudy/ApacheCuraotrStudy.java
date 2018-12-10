@@ -1,16 +1,22 @@
 package com.able.zkstudy;
 
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.api.BackgroundCallback;
 import org.apache.curator.framework.api.CuratorEvent;
+import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.curator.framework.imps.CuratorFrameworkState;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.retry.RetryNTimes;
 import org.apache.curator.retry.RetryUntilElapsed;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Before;
@@ -20,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -168,6 +175,52 @@ public class ApacheCuraotrStudy {
         } finally {
             curator.close();
         }
+    }
+    @Test
+    public void testWatch () throws Exception{
+        String path="/man";
+        //使用usingWatcher的时候只会触发一次监听 监听玩就销毁
+        curator.getData().usingWatcher(new CuratorWatcher() {
+            @Override
+            public void process(WatchedEvent event) throws Exception {
+                log.info("event={}",event);
+                log.info(event.getPath());
+            }
+        }).forPath(path);
+        TimeUnit.SECONDS.sleep(100);
+    }
+    @Test
+    public void testWatch1 () throws Exception{
+        CountDownLatch countDownLatch=new CountDownLatch(1);
+        //为节点添加watcher
+        //NodeCache:监听数据节点的变更 会触发监听事件
+        String path="/man";
+        NodeCache nodeCache=new NodeCache(curator,path);
+        //buildInitial:初始化的时候获取node的值 并且缓存
+        nodeCache.start(true);
+        ChildData currentData = nodeCache.getCurrentData();
+        if (currentData != null) {
+            log.info("节点初始化的数据为:{}",new String(currentData.getData()));
+        }else {
+            log.info("节点初始化的数据为空");
+        }
+        nodeCache.getListenable().addListener(new NodeCacheListener() {
+            @Override
+            public void nodeChanged() throws Exception {
+                ChildData currentData1 = nodeCache.getCurrentData();
+                if (currentData1!=null) {
+                    log.info("节点路径:{},节点数据:{}",currentData1.getPath(),new String(currentData1.getData()));
+                }else {
+                    log.info("节点已经被删除");
+                }
+                if (currentData==null&&currentData1!=null) {
+                    log.info("节点创建:{},节点数据:{}",currentData1.getPath(),new String(currentData1.getData()));
+                }
+                   countDownLatch.countDown();
+            }
+        });
+        countDownLatch.await();
+
     }
 }
 
