@@ -1,6 +1,8 @@
 package com.able.zkstudy;
 
 
+import com.able.zkstudy.com.able.zk.ZKConfig;
+import com.able.zkstudy.com.able.zk.ZkCurator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.ACL;
@@ -12,8 +14,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -365,6 +371,17 @@ public class ZkstudyApplicationTests {
         acls.add(new ACL(ZooDefs.Perms.ALL,id));
         String s = zookeeper.create("/huoying/kakaxi", "kakaxi".getBytes(), acls, CreateMode.PERSISTENT_SEQUENTIAL);
         log.info("创建节点成功:{}",s);
+    }
+    @Resource
+    ZkCurator zkCurator;
+    @Test
+    public void testIsAlive (){
+        boolean alived = zkCurator.isAlived();
+        log.info("alived={}",alived);
+        ApplicationContext applicationContext=
+                new AnnotationConfigApplicationContext(ZKConfig.class);
+        String[] beanDefinitionNames = applicationContext.getBeanDefinitionNames();
+        Arrays.stream(beanDefinitionNames).forEach(s -> System.out.println(s));
     }
 
 

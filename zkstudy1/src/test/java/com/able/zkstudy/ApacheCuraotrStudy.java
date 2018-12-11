@@ -272,9 +272,10 @@ public class ApacheCuraotrStudy {
 
         countDownLatch.await();
     }
+
     @Test
-    public void testAcl () throws Exception{
-        String path="/you";
+    public void testAcl() throws Exception {
+        String path = "/you";
         byte[] data = "天照".getBytes();
         Opera(new Function<CuratorFramework, Void>() {
             @Override
@@ -293,31 +294,34 @@ public class ApacheCuraotrStudy {
             }
         });
     }
+
     @Test
-    public void testUpdateAcl () throws Exception{
-        List<ACL> list= Lists.newArrayList();
-        Id id1=new Id("digest", DigestAuthenticationProvider.generateDigest("kakaxi:kakaxi"));
-        Id id2=new Id("digest", DigestAuthenticationProvider.generateDigest("mingren:mingren"));
-        list.add(new ACL(ZooDefs.Perms.ALL,id1));
-        list.add(new ACL(ZooDefs.Perms.READ,id2));
-        Opera(curator -> {
-            String path="/person/you0000000004";
+    public void testUpdateAcl() throws Exception {
+        List<ACL> list = Lists.newArrayList();
+        Id id1 = new Id("digest", DigestAuthenticationProvider.generateDigest("kakaxi:kakaxi"));
+        Id id2 = new Id("digest", DigestAuthenticationProvider.generateDigest("mingren:mingren"));
+        list.add(new ACL(ZooDefs.Perms.ALL, id1));
+        list.add(new ACL(ZooDefs.Perms.READ, id2));
+        String opera = Opera(curator -> {
+            String path = "/person/you0000000004";
             try {
                 curator.setACL().withACL(list).forPath(path);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return null;
+            return "123";
         });
     }
-    private void Opera(Function<CuratorFramework,Void> function){
-          try {
-              Void apply = function.apply(curator);
-          }finally {
-                curator.close();
-              CuratorFrameworkState state = curator.getState();
-              log.info("status={}",state);
-          }
+
+    private <T> T Opera(Function<CuratorFramework, T> function) {
+        try {
+            T t = function.apply(curator);
+            return t;
+        } finally {
+            curator.close();
+            CuratorFrameworkState state = curator.getState();
+            log.info("status={}", state);
+        }
     }
 
 }
