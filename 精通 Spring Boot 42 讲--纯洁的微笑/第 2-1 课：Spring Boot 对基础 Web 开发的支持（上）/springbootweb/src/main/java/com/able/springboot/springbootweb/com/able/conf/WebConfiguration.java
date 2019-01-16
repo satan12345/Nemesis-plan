@@ -26,7 +26,7 @@ public class WebConfiguration {
     public FilterRegistrationBean myFilter2(){
         FilterRegistrationBean filterRegistrationBean=new FilterRegistrationBean();
         filterRegistrationBean.setFilter(new MyFilter2());
-        filterRegistrationBean.setOrder(1);
+        filterRegistrationBean.setOrder(2);
         filterRegistrationBean.setName("myfilter2");
         filterRegistrationBean.addUrlPatterns("/*");
         return filterRegistrationBean;

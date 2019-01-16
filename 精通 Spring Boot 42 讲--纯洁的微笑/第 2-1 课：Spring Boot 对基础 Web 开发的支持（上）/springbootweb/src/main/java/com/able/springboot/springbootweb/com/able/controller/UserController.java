@@ -3,10 +3,7 @@ package com.able.springboot.springbootweb.com.able.controller;
 import com.able.springboot.springbootweb.com.able.model.User;
 import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -19,7 +16,7 @@ import java.util.List;
  */
 @RestController
 public class UserController {
-    @PostMapping(value = "/getUser")
+    @GetMapping(value = "/getUser")
     public User queryUser(){
         User user=new User("卡卡西",22,"123456");
         return user;

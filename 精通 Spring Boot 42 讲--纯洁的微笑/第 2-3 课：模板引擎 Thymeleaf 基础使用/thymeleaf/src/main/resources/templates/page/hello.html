@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1 th:text="${message}">你好</h1>
+
+    <p th:text="${userName}">默认名称</p>
+    <span th:text="'welcome to our application'+${userName}+'!'"></span><br/>
+    <span th:text="|welcome  to our application,${userName} !|"></span> <br/>
+
+    <a th:if="${flag}"  th:href="@{http://favorites.ren/}"> home </a>
+    <a th:unless="${flag}" th:href="@{http://www.ityouknow.com/}" >ityouknow</a>
+    <div >
+        <h1>for 循环</h1>
+        <table>
+            <tr  th:each="user,iterStat : ${users}">
+                <td th:text="${user.name}">neo</td>
+                <td th:text="${user.age}">6</td>
+                <td th:text="${user.pass}">213</td>
+                <td th:text="${iterStat.index}">index</td>
+            </tr>
+        </table>
+    </div>
+    <a href="hello.html" th:href="@{http://www.ityouknow.com/{type}(type=${type})}">link1</a>
+    <a th:href="@{http://www.ityouknow.com/{type}/can-use-springcloud.html(pageId=${pageId})}">view</a>
+    <a th:href="@{/order/details(orderId=${pageId})}">view</a>
+    <a th:href="@{/order/details(orderId=${pageId})}">view</a>
+    <!--<div th:style="'background:url(' + @{${img}} + ');'">-->
+        <!--123456<br/><br/><br/>-->
+    <!--</div>-->
+    <input th:value="${name}"/>
+    <input th:value="${age gt 30 ? '中年':'年轻'}"/>
+
+    <div >
+        <div th:switch="${sex}">
+            <p th:case="'woman'">她是一个姑娘...</p>
+            <p th:case="'man'">这是一个爷们!</p>
+            <!-- *: case的默认的选项 -->
+            <p th:case="*">未知性别的一个家伙。</p>
+        </div>
+    </div>
+</body>
+</html>
