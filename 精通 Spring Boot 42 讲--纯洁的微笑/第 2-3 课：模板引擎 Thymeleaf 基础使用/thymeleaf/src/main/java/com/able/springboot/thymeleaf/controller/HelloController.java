@@ -5,7 +5,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -15,6 +18,18 @@ import java.util.List;
  */
 @Controller
 public class HelloController {
+    @GetMapping("world")
+    public ModelAndView toWorld(HttpServletRequest request, HttpSession httpSession){
+
+        ModelAndView modelAndView=new ModelAndView("page/world");
+        modelAndView.addObject("userName","旗木卡卡西");
+        request.setAttribute("request","i am request");
+        httpSession.setAttribute("session","i am session");
+        modelAndView.addObject("date",new Date());
+        modelAndView.addObject("users",getUserList());
+        modelAndView.addObject("count","6");
+        return modelAndView;
+    }
 
     @GetMapping("/hello")
     public ModelAndView toHello(){

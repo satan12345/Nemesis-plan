@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>标题</title>
+</head>
+<body>
+
+<div>
+    <h1>内联</h1>
+    <div th:inline="text" >
+        <p>Hello, [[${userName}]] !</p>
+        <br/>
+    </div>
+    <div>
+        <h1>不使用内联</h1>
+        <p th:text="'Hello, ' + ${userName} + ' !' "></p>
+        <br/>
+    </div>
+</div>
+<div >
+    <h1>基本对象</h1>
+    <p th:text="${#request.getAttribute('request')}">
+        <br/>
+    <p th:text="${session.session}"></p>
+    Established locale country: <span th:text="${#locale.country}">CN</span>.
+</div>
+<div>
+    <!--格式化时间-->
+    <p th:text="${#dates.format(date, 'yyyy-MM-dd HH:mm:ss')}">neo</p>
+    <!--创建当前时间 精确到天-->
+    <p th:text="${#dates.createToday()}">neo</p>
+    <!--创建当前时间 精确到秒-->
+    <p th:text="${#dates.createNow()}">neo</p>
+    <!--判断是否为空-->
+    <p th:text="${#strings.isEmpty(userName)}">userName</p>
+    <!--判断 list 是否为空-->
+    <p th:text="${#strings.listIsEmpty(users)}">userName</p>
+    <!--输出字符串长度-->
+    <p th:text="${#strings.length(userName)}">userName</p>
+    <!--拼接字符串-->
+    <p th:text="${#strings.concat(userName,userName,userName)}"></p>
+    <!--创建自定长度的字符串-->
+    <p th:text="${#strings.randomAlphanumeric(count)}">userName</p>
+</div>
+
+</body>
+<script th:inline="javascript">
+    var name = [[${userName}]] + ', Sebastian';
+   // alert(name);
+</script>
+</html>
