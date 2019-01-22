@@ -1,8 +1,10 @@
 package com.able.springboot.thymeleaf.controller;
 
 import com.able.springboot.thymeleaf.model.User;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +20,26 @@ import java.util.List;
  */
 @Controller
 public class HelloController {
+    @RequestMapping("/home")
+    public String home() {
+        return "layout/home";
+    }
+
+    @RequestMapping("/layout")
+    public String layout() {
+        return "layout/layout";
+    }
+
+    @GetMapping("/fragment")
+    public String fragment() {
+        return "layout/fragment";
+    }
+
+    @GetMapping("/index")
+    public ModelAndView toIndex(){
+        ModelAndView modelAndView=new ModelAndView("layout/index");
+        return modelAndView;
+    }
     @GetMapping("world")
     public ModelAndView toWorld(HttpServletRequest request, HttpSession httpSession){
 
