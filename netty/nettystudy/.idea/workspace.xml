@@ -2,18 +2,18 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="09cae92f-9974-466e-863e-f4963938b310" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyServerHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyServerInitializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/EsstudyApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/config/EsConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/controller/BookController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/utils/JsonUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/test/java/com/able/esstudy/EsstudyApplicationTests.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/test/java/com/able/esstudy/controller/BookControllerTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../JavaSource/javasourcestudy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../JavaSource/javasourcestudy/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../elk/ElasticSearch.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../elk/ElasticSearch.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/able/netty/firstexample/MyHttpServeChannelrHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/able/netty/firstexample/TestServer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/able/netty/firstexample/TestServerInitilaizer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/src/main/java/com/able/springboot/thymeleaf/controller/HelloController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/src/main/java/com/able/springboot/thymeleaf/controller/HelloController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -43,8 +43,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="133">
-              <caret line="7" column="17" selection-start-line="6" selection-start-column="3" selection-end-line="7" selection-end-column="17" />
+            <state relative-caret-position="437">
+              <caret line="23" selection-start-line="23" selection-end-line="23" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -131,7 +131,7 @@
       </MavenImportingSettings>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="260" />
     <option name="y" value="20" />
     <option name="width" value="1400" />
@@ -304,15 +304,15 @@
       <workItem from="1547876303599" duration="412000" />
       <workItem from="1547888210492" duration="2119000" />
       <workItem from="1547890380893" duration="46000" />
-      <workItem from="1547890472668" duration="599000" />
+      <workItem from="1547890472668" duration="2865000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="35935000" />
+    <option name="totallyTimeSpent" value="38201000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2683706" />
@@ -615,8 +615,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="133">
-          <caret line="7" column="17" selection-start-line="6" selection-start-column="3" selection-end-line="7" selection-end-column="17" />
+        <state relative-caret-position="437">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

@@ -2,18 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="62cb80dc-b584-4f27-8590-daaabd2e4f29" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyServerHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyServerInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../elk/ElasticSearch.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../elk/ElasticSearch.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../netty/nettystudy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../netty/nettystudy/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../netty/nettystudy/target/classes/com/able/netty/firstexample/MyHttpServeChannelrHandler.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../netty/nettystudy/target/classes/com/able/netty/firstexample/TestServer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../netty/nettystudy/target/classes/com/able/netty/firstexample/TestServerInitilaizer.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/src/main/java/com/able/springboot/thymeleaf/controller/HelloController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../精通 Spring Boot 42 讲--纯洁的微笑/第 2-3 课：模板引擎 Thymeleaf 基础使用/thymeleaf/src/main/java/com/able/springboot/thymeleaf/controller/HelloController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../netty/nettystudy/src/main/java/com/able/netty/secondexample/MyClient.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -285,7 +277,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" weight="0.18477103" />
       <window_info id="Structure" order="1" weight="0.25" />

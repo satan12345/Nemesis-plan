@@ -14,7 +14,7 @@ public class MyClient {
         EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap=new Bootstrap();
-            bootstrap.group(eventLoopGroup).channel(N)
+            //bootstrap.group(eventLoopGroup).channel(N)
         } finally {
 
         }
