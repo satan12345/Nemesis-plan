@@ -2,18 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="09cae92f-9974-466e-863e-f4963938b310" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/EsstudyApplication.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/config/EsConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/controller/BookController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/main/java/com/able/esstudy/utils/JsonUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/test/java/com/able/esstudy/EsstudyApplicationTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../../elk/esstudy/src/test/java/com/able/esstudy/controller/BookControllerTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../JavaSource/javasourcestudy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../JavaSource/javasourcestudy/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../elk/ElasticSearch.md" beforeDir="false" afterPath="$PROJECT_DIR$/../../elk/ElasticSearch.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/able/netty/secondexample/MyClient.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -131,7 +121,7 @@
       </MavenImportingSettings>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="260" />
     <option name="y" value="20" />
     <option name="width" value="1400" />
@@ -145,6 +135,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -204,8 +196,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -305,17 +295,18 @@
       <workItem from="1547888210492" duration="2119000" />
       <workItem from="1547890380893" duration="46000" />
       <workItem from="1547890472668" duration="2865000" />
+      <workItem from="1548311817507" duration="592000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="38201000" />
+    <option name="totallyTimeSpent" value="38793000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
+    <frame x="260" y="20" width="1400" height="1000" extended-state="1" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2683706" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2719821" />
       <window_info id="Structure" order="1" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -491,12 +482,12 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pom.xml">
+      <provider editor-type-id="MavenHelperPluginDependencyAnalyzer" />
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="456">
           <caret line="25" column="25" selection-start-line="16" selection-start-column="4" selection-end-line="25" selection-end-column="25" />
         </state>
       </provider>
-      <provider editor-type-id="MavenHelperPluginDependencyAnalyzer" />
     </entry>
     <entry file="jar://E:/Repository/org/projectlombok/lombok/1.18.2/lombok-1.18.2-sources.jar!/lombok/extern/slf4j/Slf4j.java">
       <provider selected="true" editor-type-id="text-editor">
