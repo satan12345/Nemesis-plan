@@ -1483,19 +1483,1244 @@ es存储的是一个json格式的文档 其中包含多个字段 每个字段都
 
 分词器是es中专门处理分词的组件 英文为Analyzer 他的组成如下:
 
-​	Character Filters:
+​	**Character Filters:**
 
 ​		针对元素文本进行处理 如何去除html特殊标记符
 
-​	Tokenizer:
+​	**Tokenizer:**
 
 ​		将元素文本按照一定规则切分为单词
 
-​	Token Filters:
+​	**Token Filters:**
 
 ​		针对 Tokenizer处理的单词进行再加工 比如转小写 删除或者新增处理
 
 
 
 ![](es/36.jpg)
+
+### Analyze API
+
+es提供了一个测试分词的api接口  方便验证分词效果
+
+endpoint是**_anakyze** 
+
+	>可以直接指定analyzer进行测试
+	>
+	>可以直接指定索引中的字段进行测试
+	>
+	>可以自定义分词器进行测试
+
+![](es/37.jpg)
+
+```json
+//request
+POST _analyze
+
+{
+
+  "analyzer": "standard",
+
+  "text": "hello world"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "world",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
+
+```
+
+![](es/38.jpg)
+
+```json
+//request
+POST test_index/_analyze
+{
+  "field": "username",
+  "text": "宇智波鼬"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "宇",
+      "start_offset": 0,
+      "end_offset": 1,
+      "type": "<IDEOGRAPHIC>",
+      "position": 0
+    },
+    {
+      "token": "智",
+      "start_offset": 1,
+      "end_offset": 2,
+      "type": "<IDEOGRAPHIC>",
+      "position": 1
+    },
+    {
+      "token": "波",
+      "start_offset": 2,
+      "end_offset": 3,
+      "type": "<IDEOGRAPHIC>",
+      "position": 2
+    },
+    {
+      "token": "鼬",
+      "start_offset": 3,
+      "end_offset": 4,
+      "type": "<IDEOGRAPHIC>",
+      "position": 3
+    }
+  ]
+}
+
+```
+
+自定义分词器测试
+
+```json
+//request
+POST _analyze
+{
+  "tokenizer": "standard",
+  "filter":["lowercase"],
+  "text": ["Hello World"]
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "world",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
+
+```
+
+### 预定义的分词器
+
+es 自带的如下的分词器
+
+> Standard
+>
+> Simple
+>
+> Whitespace
+>
+> Stop
+>
+> Keyword
+>
+> Pattern
+>
+> Language
+
+#### Standard Analyzer
+
+​	默认分词器
+
+​	其组成如图：特征为:
+
+​		按词切分 且支持多语言
+
+​		小写处理
+
+![](es/39.jpg)
+
+```json
+//request
+POST _analyze
+{
+  "analyzer": "standard",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "the",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "2",
+      "start_offset": 4,
+      "end_offset": 5,
+      "type": "<NUM>",
+      "position": 1
+    },
+    {
+      "token": "quick",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "brown",
+      "start_offset": 12,
+      "end_offset": 17,
+      "type": "<ALPHANUM>",
+      "position": 3
+    },
+    {
+      "token": "foxes",
+      "start_offset": 18,
+      "end_offset": 23,
+      "type": "<ALPHANUM>",
+      "position": 4
+    },
+    {
+      "token": "jumped",
+      "start_offset": 24,
+      "end_offset": 30,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "over",
+      "start_offset": 31,
+      "end_offset": 35,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "the",
+      "start_offset": 36,
+      "end_offset": 39,
+      "type": "<ALPHANUM>",
+      "position": 7
+    },
+    {
+      "token": "lazy",
+      "start_offset": 40,
+      "end_offset": 44,
+      "type": "<ALPHANUM>",
+      "position": 8
+    },
+    {
+      "token": "dog's",
+      "start_offset": 45,
+      "end_offset": 50,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "bone",
+      "start_offset": 51,
+      "end_offset": 55,
+      "type": "<ALPHANUM>",
+      "position": 10
+    }
+  ]
+}
+```
+
+#### Simple Analyzer
+
+其组成如图,特征为:
+
+​	按照非字母切分
+
+​	小写处理
+
+![](es/40.jpg)
+
+```json
+//rerquest
+POST _analyze
+{
+  "analyzer": "simple",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "the",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "quick",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "word",
+      "position": 1
+    },
+    {
+      "token": "brown",
+      "start_offset": 12,
+      "end_offset": 17,
+      "type": "word",
+      "position": 2
+    },
+    {
+      "token": "foxes",
+      "start_offset": 18,
+      "end_offset": 23,
+      "type": "word",
+      "position": 3
+    },
+    {
+      "token": "jumped",
+      "start_offset": 24,
+      "end_offset": 30,
+      "type": "word",
+      "position": 4
+    },
+    {
+      "token": "over",
+      "start_offset": 31,
+      "end_offset": 35,
+      "type": "word",
+      "position": 5
+    },
+    {
+      "token": "the",
+      "start_offset": 36,
+      "end_offset": 39,
+      "type": "word",
+      "position": 6
+    },
+    {
+      "token": "lazy",
+      "start_offset": 40,
+      "end_offset": 44,
+      "type": "word",
+      "position": 7
+    },
+    {
+      "token": "dog",
+      "start_offset": 45,
+      "end_offset": 48,
+      "type": "word",
+      "position": 8
+    },
+    {
+      "token": "s",
+      "start_offset": 49,
+      "end_offset": 50,
+      "type": "word",
+      "position": 9
+    },
+    {
+      "token": "bone",
+      "start_offset": 51,
+      "end_offset": 55,
+      "type": "word",
+      "position": 10
+    }
+  ]
+}
+```
+
+#### Whitespace Analyzer
+
+​	其组成如图:特性为
+
+​		按照空格切分
+
+​	![](es/41.jpg)
+
+```json
+//request
+POST _analyze
+{
+  "analyzer": "whitespace",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "The",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "2",
+      "start_offset": 4,
+      "end_offset": 5,
+      "type": "word",
+      "position": 1
+    },
+    {
+      "token": "QUICK",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "word",
+      "position": 2
+    },
+    {
+      "token": "Brown-Foxes",
+      "start_offset": 12,
+      "end_offset": 23,
+      "type": "word",
+      "position": 3
+    },
+    {
+      "token": "jumped",
+      "start_offset": 24,
+      "end_offset": 30,
+      "type": "word",
+      "position": 4
+    },
+    {
+      "token": "over",
+      "start_offset": 31,
+      "end_offset": 35,
+      "type": "word",
+      "position": 5
+    },
+    {
+      "token": "the",
+      "start_offset": 36,
+      "end_offset": 39,
+      "type": "word",
+      "position": 6
+    },
+    {
+      "token": "lazy",
+      "start_offset": 40,
+      "end_offset": 44,
+      "type": "word",
+      "position": 7
+    },
+    {
+      "token": "dog's",
+      "start_offset": 45,
+      "end_offset": 50,
+      "type": "word",
+      "position": 8
+    },
+    {
+      "token": "bone",
+      "start_offset": 51,
+      "end_offset": 55,
+      "type": "word",
+      "position": 9
+    }
+  ]
+}
+```
+
+#### Stop Analyzer
+
+​	Stop Word 指预期助词等修饰性的词语 比如the an 的 这 等等
+
+其组成如图 特性为:
+
+​	相比Simpleanalyzer多了 Stop Word处理
+
+​	![](es/42.jpg)
+
+```json
+//request
+POST _analyze
+{
+  "analyzer": "stop",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "quick",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "word",
+      "position": 1
+    },
+    {
+      "token": "brown",
+      "start_offset": 12,
+      "end_offset": 17,
+      "type": "word",
+      "position": 2
+    },
+    {
+      "token": "foxes",
+      "start_offset": 18,
+      "end_offset": 23,
+      "type": "word",
+      "position": 3
+    },
+    {
+      "token": "jumped",
+      "start_offset": 24,
+      "end_offset": 30,
+      "type": "word",
+      "position": 4
+    },
+    {
+      "token": "over",
+      "start_offset": 31,
+      "end_offset": 35,
+      "type": "word",
+      "position": 5
+    },
+    {
+      "token": "lazy",
+      "start_offset": 40,
+      "end_offset": 44,
+      "type": "word",
+      "position": 7
+    },
+    {
+      "token": "dog",
+      "start_offset": 45,
+      "end_offset": 48,
+      "type": "word",
+      "position": 8
+    },
+    {
+      "token": "s",
+      "start_offset": 49,
+      "end_offset": 50,
+      "type": "word",
+      "position": 9
+    },
+    {
+      "token": "bone",
+      "start_offset": 51,
+      "end_offset": 55,
+      "type": "word",
+      "position": 10
+    }
+  ]
+}
+```
+
+#### Keyword analyzer
+
+​	 其组成如图,特性为:
+
+​	 不分词，直接将输入作为一个单词输出
+
+![](es/43.jpg)
+
+```json
+//request
+POST _analyze
+{
+  "analyzer": "keyword",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "The 2 QUICK Brown-Foxes jumped over the lazy dog's bone",
+      "start_offset": 0,
+      "end_offset": 55,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+```
+
+#### Pattern Analyzer
+
+​	其组成如图,特性为:
+
+​		通过正则表达式自定义分隔符
+
+​		默认为\W+,即非字词的符号作为分割符
+
+![](es/44.jpg)
+
+
+
+```json
+//request
+POST _analyze
+{
+  "analyzer": "pattern",
+  
+  "text":"The 2 QUICK Brown-Foxes jumped over the lazy dog's bone"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "the",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "2",
+      "start_offset": 4,
+      "end_offset": 5,
+      "type": "word",
+      "position": 1
+    },
+    {
+      "token": "quick",
+      "start_offset": 6,
+      "end_offset": 11,
+      "type": "word",
+      "position": 2
+    },
+    {
+      "token": "brown",
+      "start_offset": 12,
+      "end_offset": 17,
+      "type": "word",
+      "position": 3
+    },
+    {
+      "token": "foxes",
+      "start_offset": 18,
+      "end_offset": 23,
+      "type": "word",
+      "position": 4
+    },
+    {
+      "token": "jumped",
+      "start_offset": 24,
+      "end_offset": 30,
+      "type": "word",
+      "position": 5
+    },
+    {
+      "token": "over",
+      "start_offset": 31,
+      "end_offset": 35,
+      "type": "word",
+      "position": 6
+    },
+    {
+      "token": "the",
+      "start_offset": 36,
+      "end_offset": 39,
+      "type": "word",
+      "position": 7
+    },
+    {
+      "token": "lazy",
+      "start_offset": 40,
+      "end_offset": 44,
+      "type": "word",
+      "position": 8
+    },
+    {
+      "token": "dog",
+      "start_offset": 45,
+      "end_offset": 48,
+      "type": "word",
+      "position": 9
+    },
+    {
+      "token": "s",
+      "start_offset": 49,
+      "end_offset": 50,
+      "type": "word",
+      "position": 10
+    },
+    {
+      "token": "bone",
+      "start_offset": 51,
+      "end_offset": 55,
+      "type": "word",
+      "position": 11
+    }
+  ]
+}
+```
+
+#### Language Analyzer
+
+![](es/45.jpg)
+
+
+
+#### 中文分词
+
+​	中文诗词是指将一个汉字序列切分成一个一个单独的词 在英文中 单词之间是以空格作为自然分隔符 汉语中没有一个形式上的分界符
+
+### 蝉蛹分词系统
+
+​	IK
+
+​		实现中英文单词的切分 支持ik_smart ik_maxword等模式
+
+​		可自定词库 支持热更细分词词典
+
+​		https://github.com/medcl/elasticsearch-analysis-ik
+
+
+
+```json
+//request
+POST  _analyze
+{
+  "analyzer": "ik_max_word",
+  "text":"中华人民共和国"
+}
+//response
+{
+  "tokens": [
+    {
+      "token": "中华人民共和国",
+      "start_offset": 0,
+      "end_offset": 7,
+      "type": "CN_WORD",
+      "position": 0
+    },
+    {
+      "token": "中华人民",
+      "start_offset": 0,
+      "end_offset": 4,
+      "type": "CN_WORD",
+      "position": 1
+    },
+    {
+      "token": "中华",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "CN_WORD",
+      "position": 2
+    },
+    {
+      "token": "华人",
+      "start_offset": 1,
+      "end_offset": 3,
+      "type": "CN_WORD",
+      "position": 3
+    },
+    {
+      "token": "人民共和国",
+      "start_offset": 2,
+      "end_offset": 7,
+      "type": "CN_WORD",
+      "position": 4
+    },
+    {
+      "token": "人民",
+      "start_offset": 2,
+      "end_offset": 4,
+      "type": "CN_WORD",
+      "position": 5
+    },
+    {
+      "token": "共和国",
+      "start_offset": 4,
+      "end_offset": 7,
+      "type": "CN_WORD",
+      "position": 6
+    },
+    {
+      "token": "共和",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "CN_WORD",
+      "position": 7
+    },
+    {
+      "token": "国",
+      "start_offset": 6,
+      "end_offset": 7,
+      "type": "CN_CHAR",
+      "position": 8
+    }
+  ]
+}
+```
+
+
+
+​	jieba
+
+​	python中最流行的你分词系统 支持分词和词性标注
+
+​	支持繁体分词 自定义词典 并行分词等
+
+​	https://github.com/fxsjy/jieba
+
+
+
+![](es/46.jpg)
+
+当自带的分词无法满足需求的时候 可以自定义分词
+
+​	通过自定义Character Filters Tokennizer 和 Token Filter实现
+
+### Character Filtrers
+
+​	在Tokenizer之前堆元素文本进行处理 比如增加 删除 替换字符等
+
+​	自带的如下:
+
+		>HTML Strip 去除 html标签和转换html实体
+		>
+		>Mapping进行字符替换操作
+		>
+		>Pattern Replace进行正则匹配替换
+
+​	会影响后续的tokenizer解析的postion和offset信息
+
+
+
+#### Character Filters测试时可以采用如下api
+
+![](es/47.jpg)
+
+```json
+//keyword类型的tokenizer可以直接看到输出结果
+//指明要使用的char_filter
+POST  _analyze
+{
+   "char_filter": ["html_strip"], 
+  "tokenizer": "keyword",
+  "text":"<span class=\"importproblem_btn fl\">导入弹题</span>"
+}
+
+{
+  "tokens": [
+    {
+      "token": "导入弹题",
+      "start_offset": 35,
+      "end_offset": 46,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+```
+
+### Tokenizer
+
+​	将原始文办按照一定规则切分为单词(term or token)
+
+​	自带的如下:
+
+	>standard按照单词进行分割
+	>
+	>letter按照非字符类进行分割
+	>
+	>whitespace按照空格进行分割
+	>
+	>UAX URL email按照standard分割 但不会分割邮箱和url
+	>
+	>NGram 和Edge Ngram连词分割
+	>
+	>PathHierarchy按照文件路径进行分割
+
+```json
+//指定要测试的tokennizer 
+POST _analyze
+{
+  "tokenizer": "path_hierarchy",
+  "text":"/one/two/three"
+}
+{
+  "tokens": [
+    {
+      "token": "/one",
+      "start_offset": 0,
+      "end_offset": 4,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "/one/two",
+      "start_offset": 0,
+      "end_offset": 8,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "/one/two/three",
+      "start_offset": 0,
+      "end_offset": 14,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+```
+
+### Token Filters 
+
+​	d队友tokenizer输出的单词(term)进行增加 删除 修改等操作
+
+​	自带的如下:
+
+	>lowercase将所有term转换为小写
+	>
+	>stop 删除stop words
+	>
+	>NGram 和Edge Ngram连词分割
+	>
+	>Synonym 添加近义词的term
+
+```json
+POST _analyze
+{
+  "text":"a Hello World!",
+  "tokenizer":"standard",
+  "filter": [
+    "stop",
+    "lowercase",
+    {
+      "type":"ngram",
+      "min_gram":4,
+      "max_gram":4
+    }
+    ]
+}
+
+{
+  "tokens": [
+    {
+      "token": "hell",
+      "start_offset": 2,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "ello",
+      "start_offset": 2,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "worl",
+      "start_offset": 8,
+      "end_offset": 13,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "orld",
+      "start_offset": 8,
+      "end_offset": 13,
+      "type": "<ALPHANUM>",
+      "position": 2
+    }
+  ]
+}
+```
+
+### 自定义分词
+
+​	自定义分词的api
+
+​	自定义分词需要在索引配置中设定:
+
+​	![](es/48.jpg)
+
+```json
+PUT  /my_index
+{
+  "settings": {
+    "analysis": {
+      "char_filter": {},
+      "tokenizer": {},
+      "filter": {},
+      "analyzer": {}
+      
+    }
+  }
+```
+
+![](es/49.jpg)
+
+```json
+
+PUT  /my_index
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_custom_analyzer":{
+          "type":"custom",
+          "char_filter":[
+            "html_strip"
+            ],
+          "tokenzier":"standard",
+            "filter":[
+              "lowercas",
+              "asciifolding"
+            ]
+        }
+      }
+      
+    }
+  }
+}
+```
+
+![](es/50.jpg)
+
+![](es/51.jpg)
+
+### 分词使用说明
+
+​	分词会在如下两个时机使用
+
+​		创建或更新文档时(Index Time)会对想要的文档进行分词处理
+
+​		查询时(Search Time) 会对查询语句进行分词
+
+
+
+索引时分词 是通过配置Index Mapping中的每个字段的analyzer属性实现的 如下:不指定分词时 使用默认standard
+
+```json
+PUT /myindex
+{
+"mappings": {
+  "doc":{
+    "properties": {
+      "title":{
+        "type": "text",
+        "analyzer": "whitespace"
+      }
+    }
+  }
+}
+}
+```
+
+查询是分词是指指定方式有如下几种：
+
+![](es/52.jpg)
+
+​	查询的时候通过analyzer指定分词器
+
+​	通过index mapping 设置search_analyzer
+
+```json
+GET  /myindex/_search
+{
+  "query": {
+    "match": {
+      "message":{
+        "query":"hello",
+        "analyzer":"standard"
+      }
+    }
+  }
+}
+
+PUT /myindex
+{
+"mappings": {
+  "doc":{
+    "properties": {
+      "title":{
+        "type": "text",
+        "analyzer": "whitespace"
+        , "search_analyzer": "standard"
+      }
+    }
+  }
+}
+}
+```
+
+
+
+### 分词的使用建议
+
+​	明确字段是否需要分词 不需要分词的字段就将type 设置为keyword 可以节省空间和挺高性能
+
+​	善用_analyze api 查看文件的具体分词结果
+
+​	手动测试
+
+## Mapping
+
+### Mapping
+
+​	类似数据库中的表结构定义 主要作用如下:
+
+	>定义Index下的字段名(Field Name)
+	>
+	>定义字段的类型 比如数值型 字符串型 布尔型等
+	>
+	>定义倒排索引的相关的配置 比如是否索引 记录position等
+
+```json
+//request 获取一个索引的mapping
+GET /accounts/_mapping
+//response
+{
+  "accounts": {
+    "mappings": {
+      "person": {
+        "properties": {
+          "job_description": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "lastname": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "name": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 自定义Mapping
+
+```json
+//request
+PUT /user
+{
+  "mappings": {
+    "doc":{
+      "properties": {
+        "title":{
+          "type": "text"
+        },
+        "name":{
+          "type": "keyword"
+        },
+        "age":{
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+//response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "user"
+}
+```
+
+Mapping中的字段类型一旦设定后 禁止直接修改 原因如下
+
+​	luncene实现倒排索引生成后不允许修改
+
+重新建立新的索引 然后reindex操作
+
+允许新增字段 
+
+通过dynamic参数控制字段的新增
+
+​	-true(默认) 允许自动新增字段
+
+​	-false 不允许自动新增字段 但是文档可以正常写入 但无法对字段进行查询等操作
+
+​	-strict 文档不能写入 保存
+
+![](es/53.jpg)
+
+```json
+PUT /myindex
+{
+  "mappings": {
+    "doc":{
+      "dynamic":false,
+      "properties": {
+         "title":{
+          "type": "text"
+        },
+        "name":{
+          "type": "keyword"
+        },
+        "age":{
+          "type": "integer"
+        }
+      }
+      
+    }
+  }
+}
+//查询
+GET /myindex/_mapping
+//响应
+{
+  "myindex": {
+    "mappings": {
+      "doc": {
+        "dynamic": "false",
+        "properties": {
+          "age": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "keyword"
+          },
+          "title": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  }
+}
+
+```
+
+
 
