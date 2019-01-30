@@ -26,9 +26,9 @@ public class InMemoryMessageRepository implements MessageRepository {
 
     @Override
     public Message save(Message message) {
-        long l = counter.incrementAndGet();
-        message.setId(l);
-        messages.put(l,message);
+        long id = counter.incrementAndGet();
+        message.setId(id);
+        messages.put(id,message);
         return message;
     }
 
