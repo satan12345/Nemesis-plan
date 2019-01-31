@@ -2722,5 +2722,326 @@ GET /myindex/_mapping
 
 ```
 
+#### copy_to
 
+​	将该字段的值赋值到目标字段  实现类似_all的作用
+
+​	不会出现在_source中 只用来搜索
+
+```json
+//创建索引
+PUT  user
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "first_name":{
+          "type": "text",
+          "copy_to": "full_name"
+        },
+        "last_name":{
+          "type": "text",
+          "copy_to": "full_name"
+        },
+        "full_name":{
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+//插入文档
+PUT  user/doc/1
+{
+  "first_name":"yuzhibo",
+  "last_name":"you"
+}
+//查询
+GET  user/doc/_search
+{
+  "query": {
+    "match": {
+      "full_name":{
+        "query": " yuzhibo you"
+        , "operator": "and"
+      }
+    }
+  }
+}
+
+```
+
+#### index
+
+​	控制当前字段是否索引 默认为true 即记录索引 false 不记录 即不可以搜索
+
+```json
+POST user/doc/1
+{
+  "name":"kakaxi",
+  "cookie":"name=huoying"
+}
+
+GET  user/doc/_search
+{
+  "query": {
+    "match": {
+      "name": "kakaxi"
+    }
+  }
+}
+
+GET  user/doc/_search
+{
+  "query": {
+    "match": {
+      "cookie": "huoying"
+    }
+  }
+}
+
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "query_shard_exception",
+        "reason": "failed to create query: {\n  \"match\" : {\n    \"cookie\" : {\n      \"query\" : \"huoying\",\n      \"operator\" : \"OR\",\n      \"prefix_length\" : 0,\n      \"max_expansions\" : 50,\n      \"fuzzy_transpositions\" : true,\n      \"lenient\" : false,\n      \"zero_terms_query\" : \"NONE\",\n      \"boost\" : 1.0\n    }\n  }\n}",
+        "index_uuid": "hRpteGNlS9uvgn3HLlYXng",
+        "index": "user"
+      }
+    ],
+    "type": "search_phase_execution_exception",
+    "reason": "all shards failed",
+    "phase": "query",
+    "grouped": true,
+    "failed_shards": [
+      {
+        "shard": 0,
+        "index": "user",
+        "node": "o5qYEve9SCKj7FdNnqKDUw",
+        "reason": {
+          "type": "query_shard_exception",
+          "reason": "failed to create query: {\n  \"match\" : {\n    \"cookie\" : {\n      \"query\" : \"huoying\",\n      \"operator\" : \"OR\",\n      \"prefix_length\" : 0,\n      \"max_expansions\" : 50,\n      \"fuzzy_transpositions\" : true,\n      \"lenient\" : false,\n      \"zero_terms_query\" : \"NONE\",\n      \"boost\" : 1.0\n    }\n  }\n}",
+          "index_uuid": "hRpteGNlS9uvgn3HLlYXng",
+          "index": "user",
+          "caused_by": {
+            "type": "illegal_argument_exception",
+            "reason": "Cannot search on field [cookie] since it is not indexed."
+          }
+        }
+      }
+    ]
+  },
+  "status": 400
+}
+```
+
+
+
+#### idex_options
+
+用于控制倒排索引记录的内容 有如下4中配置
+
+> docs 只记录doc id
+>
+> freqs 记录doc id和 term frequencies 
+>
+> positions 记录doc id ,term frequencies 和 term position
+>
+> offsets 记录doc id  , term frequencies, term position 和character offsets 
+
+​	text 类型默认配置为positions 其他默认为docs
+
+​	记录内容越多 占用空间越大
+
+​	
+
+```json
+PUT user
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "cookie":{
+          "type": "text",
+          "index": false,
+          "index_options": "offset"
+        },
+        "name":{
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+```
+
+#### null_value
+
+当字段遇到null值时的处理策略 默认为null 即控制 此时es会忽略该值  可以通过设定null_value 设定字段的默认值
+
+```json
+PUT user
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "name":{
+          "type": "text"
+        },
+        "age":{
+          "type": "keyword",
+          "null_value": 0
+        }
+      }
+    }
+  }
+}
+GET  user/_mapping
+
+PUT  user/doc/1
+{
+  "name":"123",
+  "age":null
+}
+PUT  user/doc/2
+{
+  "name":"456",
+  "age":0
+}
+GET /user/doc/_search
+{
+ "query": {
+   "match": {
+     "age": "0"
+   }
+ }
+  
+}
+```
+
+### 数据类型
+
+#### 核心数据类型
+
+		>字符串型:text  keyword
+		>
+		>​	text会分词  keyword 不会分词
+		>
+		>数值型:long integer short byte  double float half_float scaled_float
+		>
+		>日期类型: date
+		>
+		>布尔类型 ：boolean
+		>
+		>二进制类型:binary
+		>
+		>范围类型(5.x新增):integer_range float_range long_range double_range  date_range
+
+	#### 复杂数据类型
+
+	>数组类型: array
+	>
+	>对象类型 Object
+	>
+	>嵌套内省 nested object
+	>
+	>地理位置数据类型
+	>
+	>​	geo_point
+	>
+	>​	geo_shape
+
+#### 专用类型
+
+	>记录ip地址 ip
+	>
+	>实现自动补全 completion
+	>
+	>记录分词数 token_count
+	>
+	>记录字符串hash值 murmur3
+	>
+	>percolator
+	>
+	>join
+
+多字段特性 multi-field
+
+​	允许对同一个字段采用不同的配置 比如分词 常见列子 如对人名实现拼音搜索 只需要在人名中新增一个字段为pinyin 即可
+
+```json
+PUT /user
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "username":{
+          "type": "text",
+          "fields": {
+            "pinyin":{
+              "type": "text",
+              "analyzer": "pinyin"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+GET user/doc/_search
+{
+  "query": {
+    "username.pinyin":"kakaxi"
+  }
+}
+```
+
+#### Dynamic Mapping
+
+es 可以自动识别文档字段类型 从而降低用户使用成本  如下所示:
+
+```json
+PUT /teacher/doc/1
+{
+  "username":"kakaxi",
+  "age":1
+}
+
+//es 自动识别 age为long类型 username为text类型
+GET /teacher/_mapping
+
+{
+  "teacher": {
+    "mappings": {
+      "doc": {
+        "properties": {
+          "age": {
+            "type": "long"
+          },
+          "username": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
+
+
+
+​	
+
+​	
+
+​	
 
