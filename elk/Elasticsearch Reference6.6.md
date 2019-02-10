@@ -605,3 +605,81 @@ yellow open   bank  l7sSYV2cQXmu6_4rJWVIww   5   1       1000            0    12
 ```
 
 Which means that we just successfully bulk indexed 1000 documents into the bank index (under the `_doc` type).
+
+#### The Search API
+
+Now let’s start with some simple searches. There are two basic ways to run searches: one is by sending search parameters through the [REST request URI](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-uri-request.html) and the other by sending them through the [REST request body](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-body.html). The request body method allows you to be more expressive and also to define your searches in a more readable JSON format. We’ll try one example of the request URI method but for the remainder of this tutorial, we will exclusively（仅仅） be using the request body method.
+
+The REST API for search is accessible from the `_search` endpoint. This example returns all documents in the bank index:
+
+```
+GET /bank/_search?q=*&sort=account_number:asc&pretty
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-search-API/1.json)[ ]()
+
+Let’s first dissect the search call. We are searching (`_search` endpoint) in the bank index, and the `q=*`parameter instructs Elasticsearch to match all documents in the index. The `sort=account_number:asc`parameter indicates to sort the results using the `account_number` field of each document in an ascending order. The `pretty` parameter, again, just tells Elasticsearch to return pretty-printed JSON results.
+
+And the response (partially shown):
+
+```
+{
+  "took" : 63,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1000,
+    "max_score" : null,
+    "hits" : [ {
+      "_index" : "bank",
+      "_type" : "_doc",
+      "_id" : "0",
+      "sort": [0],
+      "_score" : null,
+      "_source" : {"account_number":0,"balance":16623,"firstname":"Bradshaw","lastname":"Mckenzie","age":29,"gender":"F","address":"244 Columbus Place","employer":"Euron","email":"bradshawmckenzie@euron.com","city":"Hobucken","state":"CO"}
+    }, {
+      "_index" : "bank",
+      "_type" : "_doc",
+      "_id" : "1",
+      "sort": [1],
+      "_score" : null,
+      "_source" : {"account_number":1,"balance":39225,"firstname":"Amber","lastname":"Duke","age":32,"gender":"M","address":"880 Holmes Lane","employer":"Pyrami","email":"amberduke@pyrami.com","city":"Brogan","state":"IL"}
+    }, ...
+    ]
+  }
+}
+```
+
+As for the response, we see the following parts:
+
+- `took` – time in milliseconds for Elasticsearch to execute the search
+- `timed_out` – tells us if the search timed out or not
+- `_shards` – tells us how many shards were searched, as well as a count of the successful/failed searched shards
+- `hits` – search results
+- `hits.total` – total number of documents matching our search criteria
+- `hits.hits` – actual array of search results (defaults to first 10 documents)
+- `hits.sort` - sort key for results (missing if sorting by score)
+- `hits._score` and `max_score` - ignore these fields for now
+
+Here is the same exact search above using the alternative（替代） request body method:
+
+```
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "sort": [
+    { "account_number": "asc" }
+  ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-search-API/2.json)[ ]()
+
+The difference here is that instead of passing `q=*` in the URI, we provide a JSON-style query request body to the `_search` API. We’ll discuss this JSON query in the next section.
+
+It is important to understand that once you get your search results back, Elasticsearch is completely done with the request and does not maintain any kind of server-side resources or open cursors into your results. This is in stark contrast to many other platforms such as SQL wherein you may initially get a partial subset of your query results up-front and then you have to continuously go back to the server if you want to fetch (or page through) the rest of the results using some kind of stateful server-side cursor.（重要的是要理解，一旦您获得了搜索结果，Elasticsearch就完全完成了请求，并且不会在结果中维护任何类型的服务器端资源或打开游标。 这与SQL等许多其他平台形成鲜明对比，其中您可能最初预先获得查询结果的部分子集，然后如果要获取（或翻页）其余的则必须连续返回服务器 使用某种有状态服务器端游标的结果。）
