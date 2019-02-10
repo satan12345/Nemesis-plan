@@ -93,9 +93,7 @@ Each Elasticsearch shard is a Lucene index. There is a maximum number of documen
 
 With that out of the way, let’s get started with the fun part…
 
-
-
-## Installation
+###Installation
 
 ![Tip](https://www.elastic.co/guide/en/elasticsearch/reference/current/images/icons/tip.png)
 
@@ -110,7 +108,7 @@ echo $JAVA_HOME
 
 Once we have Java set up, we can then download and run Elasticsearch. The binaries（二进制文件） are available from [`www.elastic.co/downloads`](http://www.elastic.co/downloads) along with all the releases that have been made in the past. For each release, you have a choice among a `zip` or `tar` archive, a `DEB` or `RPM` package, or a Windows `MSI` installation package.
 
-### Installation example with tar
+####Installation example with tar
 
 For simplicity（简单）, let’s use the [tar](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/zip-targz.html) file.
 
@@ -138,7 +136,7 @@ And now we are ready to start our node and single cluster:
 ./elasticsearch
 ```
 
-### Installation with Homebrew
+####Installation with Homebrew
 
 On macOS, Elasticsearch can also be installed via [Homebrew](https://brew.sh/):
 
@@ -148,7 +146,7 @@ brew install elasticsearch
 
 If installation succeeds, Homebrew will finish by saying that you can start Elasticsearch by entering`elasticsearch`. Do that now. The expected response is described below, under [Successfully running node](https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started-install.html#successfully-running-node)[edit](https://github.com/elastic/elasticsearch/edit/6.6/docs/reference/getting-started.asciidoc).
 
-### Installation example with MSI Windows Installer
+####Installation example with MSI Windows Installer
 
 For Windows users, we recommend using the [MSI Installer package](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/windows.html). The package contains a graphical user interface (GUI) that guides you through the installation process.
 
@@ -194,7 +192,7 @@ And now we are ready to start our node and single cluster:
 .\elasticsearch.exe
 ```
 
-### Successfully running node
+####Successfully running node
 
 If everything goes well with installation, you should see a bunch of messages that look like below:
 
@@ -235,7 +233,7 @@ Also note the line marked http with information about the HTTP address (`192.168
 
 ## Exploring Your Cluster（集群探秘）
 
-### The REST API
+####The REST API
 
 Now that we have our node (and cluster) up and running, the next step is to understand how to communicate with it. Fortunately, Elasticsearch provides a very comprehensive（全面） and powerful REST API that you can use to interact with your cluster. Among the few things that can be done with the API are as follows:
 
@@ -287,3 +285,323 @@ ip        heap.percent ram.percent cpu load_1m load_5m load_15m node.role master
 ```
 
 Here, we can see our one node named "PB2SGZY", which is the single node that is currently in our cluster.
+
+#### List All Indices
+
+Now let’s take a peek（窥视） at our indices:
+
+```
+GET /_cat/indices?v
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-list-indices/1.json)[ ]()
+
+And the response:
+
+```
+health status index uuid pri rep docs.count docs.deleted store.size pri.store.size
+```
+
+Which simply means we have no indices yet in the cluster.（目前为止我们的集群中没有索引）
+
+#### Create an Index
+
+Now let’s create an index named "customer" and then list all the indexes again:
+
+```
+PUT /customer?pretty
+GET /_cat/indices?v
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-create-index/1.json)[ ]()
+
+The first command creates the index named "customer" using the PUT verb(动词). We simply append `pretty` to the end of the call to tell it to pretty-print the JSON response (if any).
+
+And the response:
+
+```
+health status index    uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   customer 95SQ4TSUT7mWBT7VNHH67A   5   1          0            0       260b           260b
+```
+
+The results of the second command tells us that we now have 1 index named customer and it has 5 primary shards and 1 replica (the defaults) and it contains 0 documents in it.
+
+You might also notice that the customer index has a yellow health tagged（标记） to it. Recall from our previous discussion that yellow means that some replicas are not (yet) allocated. The reason this happens for this index is because Elasticsearch by default created one replica for this index. Since we only have one node running at the moment, that one replica cannot yet be allocated (for high availability) until a later point in time when another node joins the cluster. Once that replica gets allocated onto a second node, the health status for this index will turn to green.
+
+#### Index and Query a Document
+
+Let’s now put something into our customer index. We’ll index a simple customer document into the customer index, with an ID of 1 as follows:
+
+```
+PUT /customer/_doc/1?pretty
+{
+  "name": "John Doe"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-query-document/1.json)[ ]()
+
+And the response:
+
+```
+{
+  "_index" : "customer",
+  "_type" : "_doc",
+  "_id" : "1",
+  "_version" : 1,
+  "result" : "created",
+  "_shards" : {
+    "total" : 2,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "_seq_no" : 0,
+  "_primary_term" : 1
+}
+```
+
+From the above, we can see that a new customer document was successfully created inside the customer index. The document also has an internal id of 1 which we specified at index time.
+
+It is important to note that Elasticsearch does not require you to explicitly create an index first before you can index documents into it. In the previous example, Elasticsearch will automatically create the customer index if it didn’t already exist beforehand.
+
+Let’s now retrieve(取回) that document that we just indexed:
+
+```
+GET /customer/_doc/1?pretty
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-query-document/2.json)[ ]()
+
+And the response:
+
+```json
+{
+  "_index" : "customer",
+  "_type" : "_doc",
+  "_id" : "1",
+  "_version" : 1,
+  "_seq_no" : 25,
+  "_primary_term" : 1,
+  "found" : true,
+  "_source" : { "name": "John Doe" }
+}
+```
+
+Nothing out of the ordinary(普通) here other than a field, `found`,(除了 found字段 这里没有什么不寻常的) stating that we found a document with the requested ID 1 and another field, `_source`, which returns the full JSON document that we indexed from the previous step.
+
+#### Delete an Index
+
+Now let’s delete the index that we just created and then list all the indexes again:
+
+```
+DELETE /customer?pretty
+GET /_cat/indices?v
+```
+
+And the response:
+
+```
+health status index uuid pri rep docs.count docs.deleted store.size pri.store.size
+```
+
+Which means that the index was deleted successfully and we are now back to where we started with nothing in our cluster.
+
+Before we move on, let’s take a closer look again at some of the API commands that we have learned so far:
+
+```json
+PUT /customer
+PUT /customer/_doc/1
+{
+  "name": "John Doe"
+}
+GET /customer/_doc/1
+DELETE /customer
+```
+
+If we study the above commands carefully, we can actually see a pattern of how we access data in Elasticsearch. That pattern can be summarized as follows:
+
+```
+<HTTP Verb> /<Index>/<Type>/<ID>
+```
+
+This REST access pattern is so pervasive(无处不在) throughout all the API commands that if you can simply remember it, you will have a good head start at mastering Elasticsearch.
+
+### Modifying Your Data
+
+Elasticsearch provides data manipulation(操作) and search capabilities in near real time. By default, you can expect a one second delay (refresh interval(刷新间隔)) from the time you index/update/delete your data until the time that it appears in your search results. This is an important distinction(区别) from other platforms like SQL wherein data is immediately available after a transaction is completed.
+
+####Indexing/Replacing Documents
+
+We’ve previously seen how we can index a single document. Let’s recall that command again:
+
+```
+PUT /customer/_doc/1?pretty
+{
+  "name": "John Doe"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-modify-data/1.json)[ ]()
+
+Again, the above will index the specified document into the customer index, with the ID of 1. If we then executed the above command again with a different (or same) document, Elasticsearch will replace (i.e. reindex) a new document on top of the existing one with the ID of 1:
+
+```
+PUT /customer/_doc/1?pretty
+{
+  "name": "Jane Doe"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-modify-data/2.json)[ ]()
+
+The above changes the name of the document with the ID of 1 from "John Doe" to "Jane Doe". If, on the other hand, we use a different ID, a new document will be indexed and the existing document(s) already in the index remains untouched（不变）.
+
+```
+PUT /customer/_doc/2?pretty
+{
+  "name": "Jane Doe"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-modify-data/3.json)[ ]()
+
+The above indexes a new document with an ID of 2.
+
+When indexing, the ID part is optional. If not specified, Elasticsearch will generate a random ID and then use it to index the document. The actual ID Elasticsearch generates (or whatever we specified explicitly in the previous examples) is returned as part of the index API call.
+
+This example shows how to index a document without an explicit ID:
+
+```
+POST /customer/_doc?pretty
+{
+  "name": "Jane Doe"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-modify-data/4.json)[ ]()
+
+**Note that in the above case, we are using the `POST` verb instead of PUT since we didn’t specify an ID.**(如果不指定id 我们需要使用POST操作符代替PUT操作符)
+
+#### Updating Documents
+
+In addition to being able to index and replace documents（除了能够索引和替换文档）, **we** can also update documents. Note though that Elasticsearch does not actually do in-place updates under the hood. Whenever we do an update, Elasticsearch deletes the old document and then indexes a new document with the update applied to it in one shot.
+
+This example shows how to update our previous document (ID of 1) by changing the name field to "Jane Doe":
+
+```json
+POST /customer/_doc/1/_update?pretty
+{
+  "doc": { "name": "Jane Doe" }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-update-documents/1.json)[ ]()
+
+This example shows how to update our previous document (ID of 1) by changing the name field to "Jane Doe" and at the same time add an age field to it:
+
+```json
+POST /customer/_doc/1/_update?pretty
+{
+  "doc": { "name": "Jane Doe", "age": 20 }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-update-documents/2.json)[ ]()
+
+Updates can also be performed by using simple scripts. This example uses a script to increment the age by 5:
+
+```json
+POST /customer/_doc/1/_update?pretty
+{
+  "script" : "ctx._source.age += 5"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-update-documents/3.json)[ ]()
+
+In the above example, `ctx._source` refers to the current source document that is about to be updated.
+
+Elasticsearch provides the ability to update multiple documents given a query condition (like an `SQL UPDATE-WHERE` statement). See [`docs-update-by-query` API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html)
+
+#### Deleting Documents
+
+Deleting a document is fairly straightforward(直截了当). This example shows how to delete our previous customer with the ID of 2:
+
+```
+DELETE /customer/_doc/2?pretty
+```
+
+See the [`_delete_by_query` API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html) to delete all documents matching a specific query. It is worth noting that(值的注意的是) it is much more efficient to delete a whole index instead of deleting all documents with the Delete By Query API(使用Delete By Query API删除整个索引而不是删除所有文档会更有效).
+
+#### Batch Processing
+
+In addition to being able to index, update, and delete individual（个别） documents, Elasticsearch also provides the ability to perform any of the above operations in batches using the [`_bulk` API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-bulk.html). This functionality is important in that it provides a very efficient mechanism to do multiple operations as fast as possible with as few network roundtrips（往返） as possible.
+
+As a quick example, the following call indexes two documents (ID 1 - John Doe and ID 2 - Jane Doe) in one bulk operation:
+
+```json
+POST /customer/_doc/_bulk?pretty
+{"index":{"_id":"1"}}
+{"name": "John Doe" }
+{"index":{"_id":"2"}}
+{"name": "Jane Doe" }
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-batch-processing/1.json)[ ]()
+
+This example updates the first document (ID of 1) and then deletes the second document (ID of 2) in one bulk operation:
+
+```
+POST /customer/_doc/_bulk?pretty
+{"update":{"_id":"1"}}
+{"doc": { "name": "John Doe becomes Jane Doe" } }
+{"delete":{"_id":"2"}}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/getting-started-batch-processing/2.json)[ ]()
+
+Note above that for the delete action, there is no corresponding(相应) source document after it since deletes only require the ID of the document to be deleted.
+
+The Bulk API does not fail due to failures in one of the actions. If a single action fails for whatever reason, it will continue to process the remainder of the actions after it. When the bulk API returns, it will provide a status for each action (in the same order it was sent in) so that you can check if a specific action failed or not.
+
+### Exploring（探索） Your Data
+
+####Sample Dataset
+
+Now that we’ve gotten a glimpse(一瞥) of the basics, let’s try to work on a more realistic(切实的) dataset. I’ve prepared a sample of fictitious JSON documents of customer bank account information. Each document has the following schema:
+
+```json
+{
+    "account_number": 0,
+    "balance": 16623,
+    "firstname": "Bradshaw",
+    "lastname": "Mckenzie",
+    "age": 29,
+    "gender": "F",
+    "address": "244 Columbus Place",
+    "employer": "Euron",
+    "email": "bradshawmckenzie@euron.com",
+    "city": "Hobucken",
+    "state": "CO"
+}
+```
+
+For the curious, this data was generated using [`www.json-generator.com/`](http://www.json-generator.com/), so please ignore the actual values and semantics(语义) of the data as these are all randomly generated.
+
+####Loading the Sample Dataset
+
+You can download the sample dataset (accounts.json) from [here](https://github.com/elastic/elasticsearch/blob/master/docs/src/test/resources/accounts.json?raw=true). Extract it to our current directory and let’s load it into our cluster as follows:
+
+```
+curl -H "Content-Type: application/json" -XPOST "localhost:9200/bank/_doc/_bulk?pretty&refresh" --data-binary "@accounts.json"
+curl "localhost:9200/_cat/indices?v"
+```
+
+And the response:
+
+```
+health status index uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   bank  l7sSYV2cQXmu6_4rJWVIww   5   1       1000            0    128.6kb        128.6kb
+```
+
+Which means that we just successfully bulk indexed 1000 documents into the bank index (under the `_doc` type).
