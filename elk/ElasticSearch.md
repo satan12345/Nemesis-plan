@@ -2937,9 +2937,9 @@ GET /user/doc/_search
 		>二进制类型:binary
 		>
 		>范围类型(5.x新增):integer_range float_range long_range double_range  date_range
-
+	
 	#### 复杂数据类型
-
+	
 	>数组类型: array
 	>
 	>对象类型 Object
@@ -3269,9 +3269,274 @@ GET /myindex/_search?q=user:kakaxi
 
 ```
 
+### URI Search
+
+通过url query 参数来实现搜索 常用参数如下
+
+ -  q指定查询的语句 语法为 Query String Syntax
+
+ -  df (default field)q 中不指定字段时 默认查询的字段  如果不指定 es会查询所有的字段
+
+ -  sort 排序
+
+ -  timeout 指定超时时间 默认不超时
+
+ -  from size 用于分页
+
+    GET /test_index/doc/_search?q=username:you&sort=age&from=0&size=2
+
+    ​
+
+term 与phrase
+
+​	term 是一个个单词
+
+​	phrase是一个个词语
+
+group 分组设定 使用括号指定匹配的规则
+
+(quick or brown) and fox
+
+status:(active or pending) title:(full text search)
+
+```json
+POST test_search_index/doc/_bulk
+
+{"index":{"_id":1}}
+
+{"username":"alfred way","job":"java engineer","age":18,"birth":"1990-01-02","isMarried":false}
+
+{"index":{"_id":2}}
+
+{"username":"alfred ","job":"java senior engineer and java specialist","age":28,"birth":"1980-05-07","isMarried":true}
+
+{"index":{"_id":3}}
+
+{"username":"lee ","job":"java and ruby engineer","age":22,"birth":"1985-08-07","isMarried":false}
+
+{"index":{"_id":4}}
+
+{"username":"alfred junior way ","job":"ruby engineer","age":23,"birth":"1989-08-07","isMarried":false}
+
+```
+
+//所有字段查询
+
+GET  test_search_index/doc/_search?q=java
+
+//单个字段查询
+
+GET  test_search_index/doc/_search?q=username:alfred
+
+//模糊匹配 
+
+GET  test_search_index/doc/_search?q=username:alfred way
+
+GET  test_search_index/doc/_search?q=username:(alfred way)
+
+{
+
+"profile":true
+
+}
+
+GET  test_search_index/doc/_search?q=username:"alfred way"
+
+布尔操作符
+
+  AND(&&),OR(||),NOT(!)
+
+​	name:(tom NOT lee)
+
+​	注意大写 不能小写
+
++- 分别对应must 和must_not
+
+​	name:(tom +lee -alfred)
+
+​	name:((lee &&!alfred)||(tom && lee && !alfred))
+
+​	+在url中会被解析为空格要使用encode后的结果才可以 为%2B
+
+GET  test_search_index/doc/_search?q=username:(alfred AND way)
+{
+  "profile":true
+}
+
+GET  test_search_index/_search?q=username:(alfred  -way)
+{
+  "profile":true
+}
+
+GET test_search_index/doc/_search?q=username:(allfred %2Bway)
+{
+  "profile":true
+}
+
+范围查询，支持数值和日期
+
+​	区间写法 闭区间用[]开区间用{}
+
+​		age:[1 TO 10] 意味着 1<=age<=10
+
+​		age: {1 TO 10} 意味着 1<age<10
+
+​		age:[1 to] 意味着 age>=1
+
+​		age:[* TO 10] 意味着 age<=10
+
+​	算术符号写法
+
+​		age:>=1
+
+​		age:(>=1 && <=10) 或者age:(+>=1+<=10)
+
+//OR
+
+GET test_search_index/doc/_search?q=username:alfred age:>26
+{
+  "profile":true
+}
+
+//AND
+
+GET  test_search_index/doc/_search?q=username:alfred AND age:>20
+{
+  "profile":true
+}
+
+GET  test_search_index/doc/_search?q=birth:(>1980 AND <1990)
+
+通配符查询
+
+​	?代表1个字符  *代表0或多个字符
+
+​	name:t?m
+
+​	name:tom*
+
+​	name:t*m
+
+通配符匹配执行效率低 且占用较多内存 不建议使用
+
+如无特殊要求 不要将? *放在最前面
+
+正则表达式
+
+​	name:/[mb]oat/
+
+![](es/70.jpg)
+
+
+
+### Request Body Search
+
+将查询语句通过http request body 发送到es 主要包含如下参数
+
+ - query 符合query dsl语法的查询语句
+ - from size
+ - timeout
+ - sort
+
+​	![](es/71.jpg)
+
+
+
+基于json定义的查询语言 主要包含如下两种类型
+
+	>字段类型查询
+	>
+	>​	如term  match range 等 只针对某一个字段进行查询
+	>
+	>复合查询
+	>
+	>​	如 bool查询 等 包含一个或多个字段类查询或者复合查询语句
+
+字段类查询
+
+​	字段类查询主要包括以下两类
+
+		>全文匹配
+		>
+		>​	针对text类型的字段进行全文检索 会对查询语句先进行分词处理 如match match_phrase 等query类型
+		>
+		>单词匹配
+		>
+		>​	不会对查询的语句做分词处理 直接去匹配字段的倒排索引 如 term terms range等query类型
+
+
+
+​	match query
+
+​		对字段做全文检索  最基本和常用的查询类型
+
+![](es/72.jpg)
+
+```json
+GET  test_search_index/doc/_search?q=username:alfred username:way
+
+GET  test_search_index/doc/_search
+{
+  "profile":true,
+  "query": {
+    "match": {
+      "username": "alfred way"
+    }
+  },
+  "_source": "username"
+}
+
+```
+
+match query 流程
+
+![](es/73.jpg)
+
+通过operator参数可以控制单词键的匹配关系 可选项为or 和and
+
+```json
+GET  test_search_index/doc/_search
+{
+  "query": {
+    "match": {
+      "username":{
+        "query": "alfred way",
+        "operator": "and"
+      }
+    }
+  },
+  "_source": "username"
+}
+```
+
+
+
+通minimum_should_match 参数可以控制需要匹配的单词数
+
+```json
+GET  test_search_index/doc/_search
+{
+  "query": {
+    "match": {
+      "job":{
+        "query": "java ruby engineer",
+        "minimum_should_match":"2"
+      }
+    }
+  },
+  "_source": "job"
+}
+```
+
+
+
+
+
 ### Range Query
 
 ​	范围查询主要针对数值和日期类型
+
+![](es/64.jpg)
 
 ```json
 GET /test1/doc/_search
@@ -3289,5 +3554,83 @@ GET /test1/doc/_search
 
 
 
+针对日期做查询
 
+```json
+GET test1/_search
+{
+  "query": {
+    "range": {
+      "birth": {
+        "lt": "1990-10-10"
+        
+      }
+    }
+  }
+}
+
+GET test1/_search
+{
+  "query": {
+    "range": {
+      "birth": {
+        "lt":"now-20y"
+        
+      }
+    }
+  }
+}
+```
+
+
+
+![](es/65.jpg)
+
+![](es/66.jpg)
+
+![](es/67.jpg)
+
+### 复合查询
+
+​	复合查询是指包含字段类查询 或复合查询的类型，主要包括以下几类
+
+ -  constant_score query
+
+ -  bool query
+
+ -  dis_max query
+
+ -  cunction_score query
+
+ -  boosting query
+
+    ​
+
+#### Constant Score Query
+
+该查询将其内部的查询结构文档得分都设定为1 或者 boost的值
+
+多用于结合bool查询实现自定义得分
+
+```json
+GET test_index/doc/_search
+{
+  "query": {
+    "constant_score": {
+      "filter": {
+        "term": {
+          "username": "you"
+        }
+      }
+    
+    }
+  }
+}
+```
+
+####Bool Query
+
+![](es/68.jpg)
+
+![](es/69.jpg)
 

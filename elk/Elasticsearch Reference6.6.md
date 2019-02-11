@@ -1147,7 +1147,7 @@ The conventions（约定） listed in this chapter can be applied throughout the
 
 ### Multiple Indices
 
-Most APIs that refer to an `index` parameter support execution across multiple indices, using simple `test1,test2,test3` notation (or `_all` for all indices). It also support wildcards(通配符), for example: `test*` or `*test` or `te*t` or `*test*`, and the ability to "exclude" (`-`), for example: `test*,-test3`.
+Most APIs that refer to an `index` parameter support execution across multiple indices, using simple `test1,test2,test3` notation(符号) (or `_all` for all indices). It also support wildcards(通配符), for example: `test*` or `*test` or `te*t` or `*test*`, and the ability to "exclude" (`-`), for example: `test*,-test3`.
 
 All multi indices API support the following url query string parameters:
 
@@ -1157,7 +1157,7 @@ All multi indices API support the following url query string parameters:
 
 - `allow_no_indices`
 
-  Controls whether to fail if a wildcard indices expressions results into no concrete indices. Either `true`or `false` can be specified. For example if the wildcard expression `foo*` is specified and no indices are available that start with `foo` then depending on this setting the request will fail. This setting is also applicable when `_all`, `*` or no index has been specified. This settings also applies for aliases, in case an alias points to a closed index.
+  Controls whether to fail if a wildcard(通配符) indices expressions results into no concrete indices. Either `true`or `false` can be specified. For example if the wildcard expression `foo*` is specified and no indices are available that start with `foo` then depending on this setting the request will fail. This setting is also applicable when `_all`, `*` or no index has been specified. This settings also applies for aliases, in case an alias points to a closed index.
 
 - `expand_wildcards`
 
@@ -1168,3 +1168,610 @@ The defaults settings for the above parameters depend on the api being used.
 ![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
 
 Single index APIs such as the [Document APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs.html) and the [single-index `alias` APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/indices-aliases.html) do not support multiple indices.
+
+###Date math support in index names
+
+Date math index name resolution enables you to search a range of time-series indices, rather than searching all of your time-series indices and filtering the results or maintaining aliases. Limiting the number of indices that are searched reduces the load on the cluster and improves execution performance. For example, if you are searching for errors in your daily logs, you can use a date math name template to restrict the search to the past two days.
+
+Almost all APIs that have an `index` parameter, support date math in the `index` parameter value.
+
+A date math index name takes the following form:
+
+```
+<static_name{date_math_expr{date_format|time_zone}}>
+```
+
+Where:
+
+| `static_name`    | is the static text part of the name      |
+| ---------------- | ---------------------------------------- |
+| `date_math_expr` | is a dynamic date math expression that computes the date dynamically |
+| `date_format`    | is the optional format in which the computed date should be rendered. Defaults to `YYYY.MM.dd`. |
+| `time_zone`      | is the optional time zone . Defaults to `utc`. |
+
+You must enclose date math index name expressions within angle brackets, and all special characters should be URI encoded. For example:
+
+```
+# GET /<logstash-{now/d}>/_search
+GET /%3Clogstash-%7Bnow%2Fd%7D%3E/_search
+{
+  "query" : {
+    "match": {
+      "test": "data"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/date-math-index-names/1.json)[ ]()
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+### Percent encoding of date math characters
+
+The special characters used for date rounding must be URI encoded as follows:
+
+| `<`  | `%3C` |
+| ---- | ----- |
+| `>`  | `%3E` |
+| `/`  | `%2F` |
+| `{`  | `%7B` |
+| `}`  | `%7D` |
+| `|`  | `%7C` |
+| `+`  | `%2B` |
+| `:`  | `%3A` |
+| `,`  | `%2C` |
+
+The following example shows different forms of date math index names and the final index names they resolve to given the current time is 22rd March 2024 noon utc.
+
+| Expression                              | Resolves to           |
+| --------------------------------------- | --------------------- |
+| `<logstash-{now/d}>`                    | `logstash-2024.03.22` |
+| `<logstash-{now/M}>`                    | `logstash-2024.03.01` |
+| `<logstash-{now/M{YYYY.MM}}>`           | `logstash-2024.03`    |
+| `<logstash-{now/M-1M{YYYY.MM}}>`        | `logstash-2024.02`    |
+| `<logstash-{now/d{YYYY.MM.dd|+12:00}}>` | `logstash-2024.03.23` |
+
+To use the characters `{` and `}` in the static part of an index name template, escape them with a backslash `\`, for example:
+
+- `<elastic\\{ON\\}-{now/M}>` resolves to `elastic{ON}-2024.03.01`
+
+The following example shows a search request that searches the Logstash indices for the past three days, assuming the indices use the default Logstash index name format, `logstash-YYYY.MM.dd`.
+
+```
+# GET /<logstash-{now/d-2d}>,<logstash-{now/d-1d}>,<logstash-{now/d}>/_search
+GET /%3Clogstash-%7Bnow%2Fd-2d%7D%3E%2C%3Clogstash-%7Bnow%2Fd-1d%7D%3E%2C%3Clogstash-%7Bnow%2Fd%7D%3E/_search
+{
+  "query" : {
+    "match": {
+      "test": "data"
+    }
+  }
+}
+```
+
+### Common options
+
+The following options can be applied to all of the REST APIs.
+
+####Pretty Results
+
+When appending `?pretty=true` to any request made, the JSON returned will be pretty formatted (use it for debugging only!). Another option is to set `?format=yaml` which will cause the result to be returned in the (sometimes) more readable yaml format.
+
+####Human readable output
+
+Statistics are returned in a format suitable for humans (eg `"exists_time": "1h"` or `"size": "1kb"`) and for computers (eg `"exists_time_in_millis": 3600000` or `"size_in_bytes": 1024`). The human readable values can be turned off by adding `?human=false` to the query string. This makes sense when the stats results are being consumed by a monitoring tool, rather than intended for human consumption. The default for the `human` flag is `false`.
+
+####Date Math
+
+Most parameters which accept a formatted date value — such as `gt` and `lt` in [range queries](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-range-query.html) `range`queries, or `from` and `to` in [`daterange` aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-aggregations-bucket-daterange-aggregation.html) — understand date maths.
+
+The expression starts with an anchor date, which can either be `now`, or a date string ending with `||`. This anchor date can optionally be followed by one or more maths expressions:
+
+- `+1h` - add one hour
+- `-1d` - subtract one day
+- `/d` - round down to the nearest day
+
+The supported time units differ from those supported by [time units](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/common-options.html#time-units) for durations. The supported units are:
+
+| `y`  | years   |
+| ---- | ------- |
+| `M`  | months  |
+| `w`  | weeks   |
+| `d`  | days    |
+| `h`  | hours   |
+| `H`  | hours   |
+| `m`  | minutes |
+| `s`  | seconds |
+
+Assuming `now` is `2001-01-01 12:00:00`, some examples are:
+
+- `now+1h`
+
+  `now` in milliseconds plus one hour. Resolves to: `2001-01-01 13:00:00`
+
+- `now-1h`
+
+  `now` in milliseconds minus one hour. Resolves to: `2001-01-01 11:00:00`
+
+- `now-1h/d`
+
+  `now` in milliseconds minus one hour, rounded down to UTC 00:00. Resolves to: `2001-01-01 00:00:00``
+
+- `2001.02.01\|\|+1M/d`
+
+  `2001-02-01` in milliseconds plus one month. Resolves to: `2001-03-01 00:00:00`
+
+####Response Filtering
+
+All REST APIs accept a `filter_path` parameter that can be used to reduce the response returned by Elasticsearch. This parameter takes a comma separated list of filters expressed with the dot notation:
+
+```
+GET /_search?q=elasticsearch&filter_path=took,hits.hits._id,hits.hits._score
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/1.json)[ ]()
+
+Responds:
+
+```
+{
+  "took" : 3,
+  "hits" : {
+    "hits" : [
+      {
+        "_id" : "0",
+        "_score" : 1.6375021
+      }
+    ]
+  }
+}
+```
+
+It also supports the `*` wildcard character to match any field or part of a field’s name:
+
+```
+GET /_cluster/state?filter_path=metadata.indices.*.stat*
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/2.json)[ ]()
+
+Responds:
+
+```
+{
+  "metadata" : {
+    "indices" : {
+      "twitter": {"state": "open"}
+    }
+  }
+}
+```
+
+And the `**` wildcard can be used to include fields without knowing the exact path of the field. For example, we can return the Lucene version of every segment with this request:
+
+```
+GET /_cluster/state?filter_path=routing_table.indices.**.state
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/3.json)[ ]()
+
+Responds:
+
+```
+{
+  "routing_table": {
+    "indices": {
+      "twitter": {
+        "shards": {
+          "0": [{"state": "STARTED"}, {"state": "UNASSIGNED"}],
+          "1": [{"state": "STARTED"}, {"state": "UNASSIGNED"}],
+          "2": [{"state": "STARTED"}, {"state": "UNASSIGNED"}],
+          "3": [{"state": "STARTED"}, {"state": "UNASSIGNED"}],
+          "4": [{"state": "STARTED"}, {"state": "UNASSIGNED"}]
+        }
+      }
+    }
+  }
+}
+```
+
+It is also possible to exclude one or more fields by prefixing the filter with the char `-`:
+
+```
+GET /_count?filter_path=-_shards
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/4.json)[ ]()
+
+Responds:
+
+```
+{
+  "count" : 5
+}
+```
+
+And for more control, both inclusive and exclusive filters can be combined in the same expression. In this case, the exclusive filters will be applied first and the result will be filtered again using the inclusive filters:
+
+```
+GET /_cluster/state?filter_path=metadata.indices.*.state,-metadata.indices.logstash-*
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/5.json)[ ]()
+
+Responds:
+
+```json
+{
+  "metadata" : {
+    "indices" : {
+      "index-1" : {"state" : "open"},
+      "index-2" : {"state" : "open"},
+      "index-3" : {"state" : "open"}
+    }
+  }
+}
+```
+
+Note that Elasticsearch sometimes returns directly the raw value of a field, like the `_source` field. If you want to filter `_source` fields, you should consider combining the already existing `_source`parameter (see [Get API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-get.html#get-source-filtering) for more details) with the `filter_path` parameter like this:
+
+```
+POST /library/book?refresh
+{"title": "Book #1", "rating": 200.1}
+POST /library/book?refresh
+{"title": "Book #2", "rating": 1.7}
+POST /library/book?refresh
+{"title": "Book #3", "rating": 0.1}
+GET /_search?filter_path=hits.hits._source&_source=title&sort=rating:desc
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/6.json)[ ]()
+
+```
+{
+  "hits" : {
+    "hits" : [ {
+      "_source":{"title":"Book #1"}
+    }, {
+      "_source":{"title":"Book #2"}
+    }, {
+      "_source":{"title":"Book #3"}
+    } ]
+  }
+}
+```
+
+####Flat Settings
+
+The `flat_settings` flag affects rendering of the lists of settings. When `flat_settings` flag is `true`settings are returned in a flat format:
+
+```
+GET twitter/_settings?flat_settings=true
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/7.json)[ ]()
+
+Returns:
+
+```json
+{
+  "twitter" : {
+    "settings": {
+      "index.number_of_replicas": "1",
+      "index.number_of_shards": "1",
+      "index.creation_date": "1474389951325",
+      "index.uuid": "n6gzFZTgS664GUfx0Xrpjw",
+      "index.version.created": ...,
+      "index.provided_name" : "twitter"
+    }
+  }
+}
+```
+
+When the `flat_settings` flag is `false` settings are returned in a more human readable structured format:
+
+```
+GET twitter/_settings?flat_settings=false
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/8.json)[ ]()
+
+Returns:
+
+```
+{
+  "twitter" : {
+    "settings" : {
+      "index" : {
+        "number_of_replicas": "1",
+        "number_of_shards": "1",
+        "creation_date": "1474389951325",
+        "uuid": "n6gzFZTgS664GUfx0Xrpjw",
+        "version": {
+          "created": ...
+        },
+        "provided_name" : "twitter"
+      }
+    }
+  }
+}
+```
+
+By default the `flat_settings` is set to `false`.
+
+####Parameters
+
+Rest parameters (when using HTTP, map to HTTP URL parameters) follow the convention of using underscore casing.
+
+####Boolean Values
+
+All REST APIs parameters (both request parameters and JSON body) support providing boolean "false" as the value `false` and boolean "true" as the value `true`. All other values will raise an error.
+
+####Number Values
+
+All REST APIs support providing numbered parameters as `string` on top of supporting the native JSON number types.
+
+####Time units
+
+Whenever durations need to be specified, e.g. for a `timeout` parameter, the duration must specify the unit, like `2d` for 2 days. The supported units are:
+
+| `d`      | days         |
+| -------- | ------------ |
+| `h`      | hours        |
+| `m`      | minutes      |
+| `s`      | seconds      |
+| `ms`     | milliseconds |
+| `micros` | microseconds |
+| `nanos`  | nanoseconds  |
+
+####Byte size units
+
+Whenever the byte size of data needs to be specified, eg when setting a buffer size parameter, the value must specify the unit, like `10kb` for 10 kilobytes. Note that these units use powers of 1024, so `1kb` means 1024 bytes. The supported units are:
+
+| `b`  | Bytes     |
+| ---- | --------- |
+| `kb` | Kilobytes |
+| `mb` | Megabytes |
+| `gb` | Gigabytes |
+| `tb` | Terabytes |
+| `pb` | Petabytes |
+
+####Unit-less quantities
+
+Unit-less quantities means that they don’t have a "unit" like "bytes" or "Hertz" or "meter" or "long tonne".
+
+If one of these quantities is large we’ll print it out like 10m for 10,000,000 or 7k for 7,000. We’ll still print 87 when we mean 87 though. These are the supported multipliers:
+
+| ``   | Single |
+| ---- | ------ |
+| `k`  | Kilo   |
+| `m`  | Mega   |
+| `g`  | Giga   |
+| `t`  | Tera   |
+| `p`  | Peta   |
+
+####Distance Units
+
+Wherever distances need to be specified, such as the `distance` parameter in the [Geo Distance Query](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-geo-distance-query.html)), the default unit if none is specified is the meter. Distances can be specified in other units, such as `"1km"` or `"2mi"` (2 miles).
+
+The full list of units is listed below:
+
+| Mile          | `mi` or `miles`                |
+| ------------- | ------------------------------ |
+| Yard          | `yd` or `yards`                |
+| Feet          | `ft` or `feet`                 |
+| Inch          | `in` or `inch`                 |
+| Kilometer     | `km` or `kilometers`           |
+| Meter         | `m` or `meters`                |
+| Centimeter    | `cm` or `centimeters`          |
+| Millimeter    | `mm` or `millimeters`          |
+| Nautical mile | `NM`, `nmi` or `nauticalmiles` |
+
+####Fuzziness
+
+Some queries and APIs support parameters to allow inexact *fuzzy* matching, using the `fuzziness`parameter.
+
+When querying `text` or `keyword` fields, `fuzziness` is interpreted as a [Levenshtein Edit Distance](http://en.wikipedia.org/wiki/Levenshtein_distance) — the number of one character changes that need to be made to one string to make it the same as another string.
+
+The `fuzziness` parameter can be specified as:
+
+- `0`, `1`, `2`
+
+  the maximum allowed Levenshtein Edit Distance (or number of edits)
+
+- `AUTO`
+
+  generates an edit distance based on the length of the term. Low and high distance arguments may be optionally provided `AUTO:[low],[high]`, if not specified, the default values are 3 and 6, equivalent to `AUTO:3,6` that make for lengths:`0..2`must match exactly`3..5`one edit allowed`>5`two edits allowed`AUTO` should generally be the preferred value for `fuzziness`.
+
+####Enabling stack traces
+
+By default when a request returns an error Elasticsearch doesn’t include the stack trace of the error. You can enable that behavior by setting the `error_trace` url parameter to `true`. For example, by default when you send an invalid `size` parameter to the `_search` API:
+
+```
+POST /twitter/_search?size=surprise_me
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/9.json)[ ]()
+
+The response looks like:
+
+```
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "illegal_argument_exception",
+        "reason" : "Failed to parse int parameter [size] with value [surprise_me]"
+      }
+    ],
+    "type" : "illegal_argument_exception",
+    "reason" : "Failed to parse int parameter [size] with value [surprise_me]",
+    "caused_by" : {
+      "type" : "number_format_exception",
+      "reason" : "For input string: \"surprise_me\""
+    }
+  },
+  "status" : 400
+}
+```
+
+But if you set `error_trace=true`:
+
+```
+POST /twitter/_search?size=surprise_me&error_trace=true
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/common-options/10.json)[ ]()
+
+The response looks like:
+
+```
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "illegal_argument_exception",
+        "reason": "Failed to parse int parameter [size] with value [surprise_me]",
+        "stack_trace": "Failed to parse int parameter [size] with value [surprise_me]]; nested: IllegalArgumentException..."
+      }
+    ],
+    "type": "illegal_argument_exception",
+    "reason": "Failed to parse int parameter [size] with value [surprise_me]",
+    "stack_trace": "java.lang.IllegalArgumentException: Failed to parse int parameter [size] with value [surprise_me]\n    at org.elasticsearch.rest.RestRequest.paramAsInt(RestRequest.java:175)...",
+    "caused_by": {
+      "type": "number_format_exception",
+      "reason": "For input string: \"surprise_me\"",
+      "stack_trace": "java.lang.NumberFormatException: For input string: \"surprise_me\"\n    at java.lang.NumberFormatException.forInputString(NumberFormatException.java:65)..."
+    }
+  },
+  "status": 400
+}
+```
+
+####Request body in query string
+
+For libraries that don’t accept a request body for non-POST requests, you can pass the request body as the `source` query string parameter instead. When using this method, the `source_content_type`parameter should also be passed with a media type value that indicates the format of the source, such as `application/json`.(对于不接受非POST请求的请求主体的库，您可以将请求主体作为源查询字符串参数传递。 使用此方法时，还应使用指示源格式的媒体类型值传递source_content_type参数，例如application / json。)
+
+####Content-Type Requirements
+
+The type of the content sent in a request body must be specified using the `Content-Type` header. The value of this header must map to one of the supported formats that the API supports. Most APIs support JSON, YAML, CBOR, and SMILE. The bulk and multi-search APIs support NDJSON, JSON and SMILE; other types will result in an error response.
+
+Additionally, when using the `source` query string parameter the content type must be specified using the `source_content_type` query string parameter.
+
+### URL-based access control
+
+Many users use a proxy with URL-based access control to secure access to Elasticsearch indices. For [multi-search](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-multi-search.html), [multi-get](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-multi-get.html) and [bulk](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-bulk.html) requests, the user has the choice of specifying an index in the URL and on each individual request within the request body. This can make URL-based access control challenging.
+
+To prevent the user from overriding the index which has been specified in the URL(防止用户覆盖URL中指定的索引), add this setting to the `elasticsearch.yml` file:
+
+```
+rest.action.multi.allow_explicit_index: false
+```
+
+The default value is `true`, but when set to `false`, Elasticsearch will reject requests that have an explicit index specified in the request body.
+
+## Document APIs
+
+This section starts with a short introduction to Elasticsearch’s [data replication model](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-replication.html), followed by a detailed(详细的) description of the following CRUD APIs:
+
+**Single document APIs**
+
+- [*Index API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html)
+- [*Get API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-get.html)
+- [*Delete API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete.html)
+- [*Update API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update.html)
+
+**Multi-document APIs**
+
+- [*Multi Get API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-multi-get.html)
+- [*Bulk API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-bulk.html)
+- [*Delete By Query API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html)
+- [*Update By Query API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html)
+- [*Reindex API*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-reindex.html)
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+All CRUD APIs are single-index APIs. The `index` parameter accepts a single index name, or an `alias` which points to a single index.
+
+### Reading and Writing documents
+
+####Introduction
+
+Each index in Elasticsearch is [divided into shards](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/getting-started-concepts.html#getting-started-shards-and-replicas) (被分片)and each shard can have multiple copies. These copies are known as a *replication group* and must be kept in sync（同步） when documents are added or removed. If we fail to do so, reading from one copy will result in very different results than reading from another. The process of keeping the shard copies in sync and serving reads from them is what we call the *data replication model*.
+
+Elasticsearch’s data replication model is based on the *primary-backup model（主备模型）* and is described very well in the [PacificA paper](https://www.microsoft.com/en-us/research/publication/pacifica-replication-in-log-based-distributed-storage-systems/) of Microsoft Research. That model is based on having a single copy from the replication group that acts as the primary shard. The other copies are called *replica shards*. The primary serves as the main entry（入口） point for all indexing operations. It is in charge of validating(校验) them and making sure they are correct. Once an index operation has been accepted by the primary, the primary is also responsible for replicating the operation to the other copies.
+
+This purpose of this section is to give a high level overview of the Elasticsearch replication model and discuss the implications(影响) it has for various interactions（互动） between write and read operations.
+
+####Basic write model
+
+Every indexing operation in Elasticsearch is first resolved to a replication group using [routing](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-routing), typically based on the document ID. Once the replication group has been determined（决定）, the operation is forwarded internally to the current *primary shard* of the group（操作就是内部转发到对应分片组的主分片）. The primary shard is responsible for validating the operation and forwarding it to the other replicas. Since replicas can be offline, the primary is not required to replicate to all replicas. Instead, Elasticsearch maintains a list of shard copies that should receive the operation. This list is called the *in-sync copies* and is maintained by the master node. As the name implies, these are the set of "good" shard copies that are guaranteed to have processed all of the index and delete operations that have been acknowledged to the user. The primary is responsible for maintaining this invariant and thus has to replicate all operations to each copy in this set.
+
+The primary shard follows this basic flow:
+
+1. Validate incoming operation and reject it if structurally invalid (Example: have an object field where a number is expected)
+2. Execute the operation locally i.e. indexing or deleting the relevant document. This will also validate the content of fields and reject if needed (Example: a keyword value is too long for indexing in Lucene).
+3. Forward the operation to each replica in the current in-sync copies set. If there are multiple replicas, this is done in parallel.
+4. Once all replicas have successfully performed the operation and responded to the primary, the primary acknowledges the successful completion of the request to the client.
+
+#### Failure handling
+
+Many things can go wrong during indexing — disks can get corrupted(毁坏), nodes can be disconnected from each other, or some configuration mistake could cause an operation to fail on a replica despite（尽管） it being successful on the primary. These are infrequent（罕见的） but the primary has to respond to them.
+
+In the case that the primary itself fails, the node hosting the primary will send a message to the master about it. The indexing operation will wait (up to 1 minute, by [default](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/index-modules.html#dynamic-index-settings)) for the master to promote one of the replicas to be a new primary. The operation will then be forwarded to the new primary for processing. Note that the master also monitors the health of the nodes and may decide to proactively demote a primary. This typically happens when the node holding the primary is isolated（隔离的） from the cluster by a networking issue. See [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-replication.html#demoted-primary) for more details.
+
+Once the operation has been successfully performed on the primary, the primary has to deal with potential（潜在的） failures when executing it on the replica shards. This may be caused by an actual failure on the replica or due to a network issue preventing the operation from reaching the replica (or preventing the replica from responding). All of these share the same end result: a replica which is part of the in-sync replica set misses an operation that is about to be acknowledged. In order to avoid violating the invariant, the primary sends a message to the master requesting that the problematic shard be removed from the in-sync replica set. Only once removal of the shard has been acknowledged by the master does the primary acknowledge the operation. Note that the master will also instruct another node to start building a new shard copy in order to restore the system to a healthy state.
+
+While forwarding an operation to the replicas, the primary will use the replicas to validate（验证） that it is still the active primary. If the primary has been isolated（孤立） due to a network partition (or a long GC) it may continue to process incoming indexing operations before realising（认识） that it has been demoted（降级）. Operations that come from a stale primary will be rejected by the replicas. When the primary receives a response from the replica rejecting its request because it is no longer the primary then it will reach out to the master and will learn that it has been replaced. The operation is then routed to the new primary.
+
+**What happens if there are no replicas?**
+
+This is a valid scenario（有效的方案） that can happen due to index configuration or simply because all the replicas have failed. In that case the primary is processing operations without any external validation, which may seem problematic. On the other hand, the primary cannot fail other shards on its own but request the master to do so on its behalf. This means that the master knows that the primary is the only single good copy. We are therefore guaranteed that the master will not promote any other (out-of-date) shard copy to be a new primary and that any operation indexed into the primary will not be lost. Of course, since at that point we are running with only single copy of the data, physical hardware issues can cause data loss. See [Wait For Active Shards](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards)[edit](https://github.com/elastic/elasticsearch/edit/6.6/docs/reference/docs/index_.asciidoc) for some mitigation options.
+
+####Basic read mode
+
+Reads in Elasticsearch can be very lightweight lookups by ID or a heavy search request with complex aggregations that take non-trivial（不平凡的） CPU power. One of the beauties of the primary-backup model is that it keeps all shard copies identical (with the exception of in-flight operations). As such, a single in-sync copy is sufficient（足够） to serve read requests.
+
+When a read request is received by a node, that node is responsible for forwarding it to the nodes that hold the relevant shards, collating the responses, and responding to the client. We call that node the *coordinating node* for that request. The basic flow is as follows:
+
+1. Resolve the read requests to the relevant shards. Note that since most searches will be sent to one or more indices, they typically need to read from multiple shards, each representing a different subset of the data.
+2. Select an active copy of each relevant shard, from the shard replication group. This can be either the primary or a replica. By default, Elasticsearch will simply round robin between the shard copies.
+3. Send shard level read requests to the selected copies.
+4. Combine the results and respond. Note that in the case of get by ID look up, only one shard is relevant and this step can be skipped.
+
+#### Failure handling
+
+When a shard fails to respond to a read request, the coordinating node will select another copy from the same replication group and send the shard level search request to that copy instead. Repetitive（重复的） failures can result in no shard copies being available. In some cases, such as `_search`, Elasticsearch will prefer to respond fast, albeit with partial results, instead of waiting for the issue to be resolved（虽然有部分结果，而不是等待问题得到解决） (partial results are indicated in the `_shards` header of the response).
+
+####A few simple implications
+
+Each of these basic flows determines how Elasticsearch behaves as a system for both reads and writes. Furthermore, since read and write requests can be executed concurrently, these two basic flows interact with each other. This has a few inherent implications:
+
+- Efficient reads
+
+  Under normal operation each read operation is performed once for each relevant replication group. Only under failure conditions do multiple copies of the same shard execute the same search.
+
+- Read unacknowledged
+
+  Since the primary first indexes locally and then replicates the request, it is possible for a concurrent read to already see the change before it has been acknowledged.
+
+- Two copies by default
+
+  This model can be fault tolerant while maintaining only two copies of the data. This is in contrast to quorum-based system where the minimum number of copies for fault tolerance is 3.
+
+####Failures
+
+Under failures, the following is possible:
+
+- A single shard can slow down indexing
+
+  Because the primary waits for all replicas in the in-sync copies set during each operation, a single slow shard can slow down the entire replication group. This is the price we pay for the read efficiency mentioned above. Of course a single slow shard will also slow down unlucky searches that have been routed to it.由于主服务器在每个操作期间等待同步副本集中的所有副本，因此单个慢速分片可能会降低整个复制组的速度。 这是我们为上述阅读效率支付的价格。 当然，单个慢速分片也会减慢已经路由到它的不幸运搜索。
+
+- Dirty reads
+
+  An isolated primary can expose writes that will not be acknowledged. This is caused by the fact that an isolated primary will only realize that it is isolated once it sends requests to its replicas or when reaching out to the master. At that point the operation is already indexed into the primary and can be read by a concurrent read. Elasticsearch mitigates this risk by pinging the master every second (by default) and rejecting indexing operations if no master is known.（隔离的主数据库可以暴露无法识别的写入。 这是因为隔离的主服务器只有在向其副本发送请求或向主服务器发送请求时才会意识到它是隔离的。 此时，操作已经索引到主服务器中，并且可以通过并发读取来读取。 Elasticsearch通过每秒ping一次主服务器（默认情况下）并在没有master知道的情况下拒绝索引操作来减轻这种风险。）
+
+####The Tip of the Iceberg
+
+This document provides a high level overview of how Elasticsearch deals with data. Of course, there is much much more going on under the hood. Things like primary terms, cluster state publishing and master election all play a role in keeping this system behaving correctly. This document also doesn’t cover known and important bugs (both closed and open). We recognize that [GitHub is hard to keep up with](https://github.com/elastic/elasticsearch/issues?q=label%3Aresiliency). To help people stay on top of those and we maintain a dedicated [resiliency page](https://www.elastic.co/guide/en/elasticsearch/resiliency/current/index.html) on our website. We strongly advise reading it.
