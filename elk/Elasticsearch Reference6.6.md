@@ -1111,7 +1111,7 @@ There are many other aggregations capabilities that we won’t go into detail he
 
 Elasticsearch is both a simple and complex product. We’ve so far learned the basics of what it is, how to look inside of it, and how to work with it using some of the REST APIs. Hopefully this tutorial has given you a better understanding of what Elasticsearch is and more importantly, inspired you to further experiment with the rest of its great features!
 
-## Set up Elasticsearch
+## Set up Elasticsearch（TODO）
 
 This section includes information on how to setup Elasticsearch and get it running, including:
 
@@ -1132,3 +1132,39 @@ We recommend installing Java version **1.8.0_131 or a later version in the Java 
 
 The version of Java that Elasticsearch will use can be configured by setting the `JAVA_HOME`environment variable.
 
+## Upgrade Elasticsearch (TODO)
+
+ ## API Conventions
+
+The **Elasticsearch** REST APIs are exposed(暴露) using [JSON over HTTP](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/modules-http.html).
+
+The conventions（约定） listed in this chapter can be applied throughout the REST API, unless otherwise specified.
+
+- [*Multiple Indices*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/multi-index.html)
+- [*Date math support in index names*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/date-math-index-names.html)
+- [*Common options*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/common-options.html)
+- [*URL-based access control*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/url-access-control.html)
+
+### Multiple Indices
+
+Most APIs that refer to an `index` parameter support execution across multiple indices, using simple `test1,test2,test3` notation (or `_all` for all indices). It also support wildcards(通配符), for example: `test*` or `*test` or `te*t` or `*test*`, and the ability to "exclude" (`-`), for example: `test*,-test3`.
+
+All multi indices API support the following url query string parameters:
+
+- `ignore_unavailable`
+
+  Controls whether to ignore if any specified indices are unavailable, this includes indices that don’t exist or closed indices. Either `true` or `false` can be specified.
+
+- `allow_no_indices`
+
+  Controls whether to fail if a wildcard indices expressions results into no concrete indices. Either `true`or `false` can be specified. For example if the wildcard expression `foo*` is specified and no indices are available that start with `foo` then depending on this setting the request will fail. This setting is also applicable when `_all`, `*` or no index has been specified. This settings also applies for aliases, in case an alias points to a closed index.
+
+- `expand_wildcards`
+
+  Controls to what kind of concrete indices wildcard indices expression expand to. If `open` is specified then the wildcard expression is expanded to only open indices and if `closed` is specified then the wildcard expression is expanded only to closed indices. Also both values (`open,closed`) can be specified to expand to all indices.If `none` is specified then wildcard expansion will be disabled and if `all` is specified, wildcard expressions will expand to all indices (this is equivalent to specifying `open,closed`).
+
+The defaults settings for the above parameters depend on the api being used.
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+Single index APIs such as the [Document APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs.html) and the [single-index `alias` APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/indices-aliases.html) do not support multiple indices.
