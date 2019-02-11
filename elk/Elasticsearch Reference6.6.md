@@ -683,3 +683,452 @@ GET /bank/_search
 The difference here is that instead of passing `q=*` in the URI, we provide a JSON-style query request body to the `_search` API. We’ll discuss this JSON query in the next section.
 
 It is important to understand that once you get your search results back, Elasticsearch is completely done with the request and does not maintain any kind of server-side resources or open cursors into your results. This is in stark contrast to many other platforms such as SQL wherein you may initially get a partial subset of your query results up-front and then you have to continuously go back to the server if you want to fetch (or page through) the rest of the results using some kind of stateful server-side cursor.（重要的是要理解，一旦您获得了搜索结果，Elasticsearch就完全完成了请求，并且不会在结果中维护任何类型的服务器端资源或打开游标。 这与SQL等许多其他平台形成鲜明对比，其中您可能最初预先获得查询结果的部分子集，然后如果要获取（或翻页）其余的则必须连续返回服务器 使用某种有状态服务器端游标的结果。）
+
+#### Introducing the Query Language
+
+Elasticsearch provides a JSON-style domain-specific language that you can use to execute queries. This is referred to as the [Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl.html). The query language is quite comprehensive(全面) and can be intimidating（吓人） at first glance but the best way to actually learn it is to start with a few basic examples.
+
+Going back to our last example, we executed this query:
+
+```json
+GET /bank/_search
+{
+  "query": { "match_all": {} }
+}
+```
+
+Dissecting(剖析)the above, the `query` part tells us what our query definition is and the `match_all` part is simply the type of query that we want to run. The `match_all` query is simply a search for all documents in the specified index.
+
+In addition to the `query` parameter, we also can pass other parameters to influence the search results. In the example in the section above we passed in `sort`, here we pass in `size`:
+
+```json
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "size": 1
+}
+```
+
+Note that if `size` is not specified, it defaults to 10.
+
+This example does a `match_all` and returns documents 10 through 19:
+
+```json
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "from": 10,
+  "size": 10
+}
+```
+
+The **`from`** parameter (0-based) specifies which document index to start from and the `size`parameter specifies how many documents to return starting at the from parameter. This feature is useful when implementing paging of search results. Note that if `from` is not specified, it defaults to 0.
+
+This example does a `match_all` and sorts the results by account balance in descending order and returns the top 10 (default size) documents.
+
+```json
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "sort": { "balance": { "order": "desc" } }
+}
+```
+
+#### Executing Searches
+
+Now that we have seen a few of the basic search parameters, let’s dig in some more into the Query DSL. Let’s first take a look at the returned document fields. By default, the full JSON document is returned as part of all searches(作为所有搜索的一部分，返回完整的JSON文档). This is referred to as the source (`_source` field in the search hits). If we don’t want the entire source document returned, we have the ability to request only a few fields from within source to be returned.
+
+This example shows how to return two fields, `account_number` and `balance` (inside of `_source`), from the search:
+
+```json
+GET /bank/_search
+{
+  "query": { "match_all": {} },
+  "_source": ["account_number", "balance"]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/1.json)[ ]()
+
+Note that the above example simply reduces the `_source` field. It will still only return one field named `_source` but within it, only the fields `account_number` and `balance` are included.（注意，上面的示例只是减少了_source字段。它仍然只返回一个名为_source的字段，但是其中只包含account_number和balance字段）
+
+If you come from a SQL background, the above is somewhat similar in concept to the `SQL SELECT FROM` field list.
+
+Now let’s move on to the query part. Previously, we’ve seen how the `match_all` query is used to match all documents. Let’s now introduce a new query called the [`match` query](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-match-query.html), which can be thought of as a basic fielded search query (i.e. a search done against a specific field or set of fields).
+
+This example returns the account numbered 20:
+
+```json
+GET /bank/_search
+{
+  "query": { "match": { "account_number": 20 } }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/2.json)[ ]()
+
+This example returns all accounts containing the term "mill" in the address:
+
+```json
+GET /bank/_search
+{
+  "query": { "match": { "address": "mill" } }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/3.json)[ ]()
+
+This example returns all accounts containing the term "mill" or "lane" in the address:
+
+```json
+GET /bank/_search
+{
+  "query": { "match": { "address": "mill lane" } }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/4.json)[ ]()
+
+This example is a variant of `match` (`match_phrase`) that returns all accounts containing the phrase "mill lane" in the address:
+
+```
+GET /bank/_search
+{
+  "query": { "match_phrase": { "address": "mill lane" } }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/5.json)[ ]()
+
+Let’s now introduce the [`bool` query](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-bool-query.html). The `bool` query allows us to compose smaller queries into bigger queries using boolean logic.(bool 查询允许我们使用布尔逻辑将较小的查询组合成较大的查询)
+
+This example composes two `match` queries and returns all accounts containing "mill" and "lane" in the address:
+
+```json
+GET /bank/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/6.json)[ ]()
+
+In the above example, the `bool must` clause specifies all the queries that must be true for a document to be considered a match.(bool must 子句 指明文档想要匹配 必须所有的查询都是true )
+
+In contrast(与此相反), this example composes two `match` queries and returns all accounts containing "mill" or "lane" in the address:
+
+```json
+GET /bank/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/7.json)[ ]()
+
+In the above example, the `bool should` clause specifies a list of queries either of which must be true for a document to be considered a match.
+
+This example composes two `match` queries and returns all accounts that contain neither "mill" nor "lane" in the address:
+
+```json
+GET /bank/_search
+{
+  "query": {
+    "bool": {
+      "must_not": [
+        { "match": { "address": "mill" } },
+        { "match": { "address": "lane" } }
+      ]
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-search/8.json)[ ]()
+
+In the above example, the `bool must_not` clause specifies a list of queries none of which must be true for a document to be considered a match.
+
+We can combine `must`, `should`, and `must_not` clauses simultaneously（同时） inside a `bool` query. Furthermore（此外）, we can compose `bool` queries inside any of these `bool` clauses to mimic any complex multi-level boolean logic.
+
+This example returns all accounts of anybody who is 40 years old but doesn’t live in ID(aho):
+
+```json
+GET /bank/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "match": { "age": "40" } }
+      ],
+      "must_not": [
+        { "match": { "state": "ID" } }
+      ]
+    }
+  }
+}
+```
+
+#### Executing Filters
+
+In the previous section, we skipped over a little detail called the document score (`_score` field in the search results). The score is a numeric value that is a relative measure of how well the document matches the search query that we specified. The higher the score, the more relevant the document is, the lower the score, the less relevant the document is.
+
+But queries do not always need to produce scores（但是查询并不总是需要生成分数）, in particular when they are only used for "filtering"（过滤） the document set. Elasticsearch detects(查出) these situations（状况） and automatically optimizes query execution in order not to compute useless scores.(为了不计算不必要的分数)
+
+The [`bool` query](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-bool-query.html) that we introduced in the previous section also supports `filter` clauses which allow us to use a query to restrict(限定) the documents that will be matched by other clauses, without changing how scores are computed. As an example, let’s introduce the [`range` query](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl-range-query.html), which allows us to filter documents by a range of values. This is generally used for numeric or date filtering.
+
+This example uses a bool query to return all accounts with balances between 20000 and 30000, inclusive. In other words, we want to find accounts with a balance that is greater than or equal to 20000 and less than or equal to 30000.
+
+```json
+GET /bank/_search
+{
+  "query": {
+    "bool": {
+      "must": { "match_all": {} },
+      "filter": {
+        "range": {
+          "balance": {
+            "gte": 20000,
+            "lte": 30000
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Dissecting(解剖) the above, the bool query contains a `match_all` query (the query part) and a `range` query (the filter part). We can substitute(替代) any other queries into the query and the filter parts. In the above case, the range query makes perfect sense since documents falling into the range all match "equally", i.e., no document is more relevant than another.
+
+In addition to the `match_all`, `match`, `bool`, and `range` queries, there are a lot of other query types that are available and we won’t go into them here. Since we already have a basic understanding of how they work, it shouldn’t be too difficult to apply this knowledge in learning and experimenting with the other query types.
+
+#### Executing Aggregations
+
+Aggregations provide the ability to group and extract statistics from your data.（聚合提供了对数据进行分组和提取统计信息的能力） The easiest way to think about aggregations is by roughly equating it to the SQL GROUP BY and the SQL aggregate functions. In Elasticsearch, you have the ability to execute searches returning hits and at the same time return aggregated results separate（分开） from the hits all in one response. This is very powerful and efficient in the sense that you can run queries and multiple aggregations（多个聚合） and get the results back of both (or either) operations in one shot avoiding network roundtrips using a concise（简明的） and simplified API.
+
+To start with, this example groups all the accounts by state, and then returns the top 10 (default) states sorted by count descending（递减） (also default):
+
+```json
+GET /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state.keyword"
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-aggregations/1.json)[ ]()
+
+In SQL, the above aggregation is similar in concept to:
+
+```
+SELECT state, COUNT(*) FROM bank GROUP BY state ORDER BY COUNT(*) DESC LIMIT 10;
+```
+
+And the response (partially shown):
+
+```json
+{
+  "took": 29,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped" : 0,
+    "failed": 0
+  },
+  "hits" : {
+    "total" : 1000,
+    "max_score" : 0.0,
+    "hits" : [ ]
+  },
+  "aggregations" : {
+    "group_by_state" : {
+      "doc_count_error_upper_bound": 20,
+      "sum_other_doc_count": 770,
+      "buckets" : [ {
+        "key" : "ID",
+        "doc_count" : 27
+      }, {
+        "key" : "TX",
+        "doc_count" : 27
+      }, {
+        "key" : "AL",
+        "doc_count" : 25
+      }, {
+        "key" : "MD",
+        "doc_count" : 25
+      }, {
+        "key" : "TN",
+        "doc_count" : 23
+      }, {
+        "key" : "MA",
+        "doc_count" : 21
+      }, {
+        "key" : "NC",
+        "doc_count" : 21
+      }, {
+        "key" : "ND",
+        "doc_count" : 21
+      }, {
+        "key" : "ME",
+        "doc_count" : 20
+      }, {
+        "key" : "MO",
+        "doc_count" : 20
+      } ]
+    }
+  }
+}
+```
+
+We can see that there are 27 accounts in `ID` (Idaho), followed by 27 accounts in `TX` (Texas), followed by 25 accounts in `AL` (Alabama), and so forth.
+
+Note that we set `size=0` to not show search hits because we only want to see the aggregation results in the response.
+
+Building on the previous aggregation, this example calculates the average account balance by state (again only for the top 10 states sorted by count in descending order):
+
+```json
+GET /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state.keyword"
+      },
+      "aggs": {
+        "average_balance": {
+          "avg": {
+            "field": "balance"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-aggregations/2.json)[ ]()
+
+Notice how we nested(嵌套) the `average_balance` aggregation inside the `group_by_state` aggregation. This is a common pattern for all the aggregations. You can nest aggregations inside aggregations arbitrarily to extract pivoted summarizations that you require from your data.
+
+Building on the previous aggregation, let’s now sort on the average balance in descending order:
+
+```json
+GET /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_state": {
+      "terms": {
+        "field": "state.keyword",
+        "order": {
+          "average_balance": "desc"
+        }
+      },
+      "aggs": {
+        "average_balance": {
+          "avg": {
+            "field": "balance"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-aggregations/3.json)[ ]()
+
+This example demonstrates how we can group by age brackets (ages 20-29, 30-39, and 40-49), then by gender, and then finally get the average account balance, per age bracket, per gender:
+
+```json
+GET /bank/_search
+{
+  "size": 0,
+  "aggs": {
+    "group_by_age": {
+      "range": {
+        "field": "age",
+        "ranges": [
+          {
+            "from": 20,
+            "to": 30
+          },
+          {
+            "from": 30,
+            "to": 40
+          },
+          {
+            "from": 40,
+            "to": 50
+          }
+        ]
+      },
+      "aggs": {
+        "group_by_gender": {
+          "terms": {
+            "field": "gender.keyword"
+          },
+          "aggs": {
+            "average_balance": {
+              "avg": {
+                "field": "balance"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/getting-started-aggregations/4.json)[ ]()
+
+There are many other aggregations capabilities that we won’t go into detail here. The [aggregations reference guide](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-aggregations.html) is a great starting point if you want to do further experimentation.
+
+#### Conclusion(结论)
+
+Elasticsearch is both a simple and complex product. We’ve so far learned the basics of what it is, how to look inside of it, and how to work with it using some of the REST APIs. Hopefully this tutorial has given you a better understanding of what Elasticsearch is and more importantly, inspired you to further experiment with the rest of its great features!
+
+## Set up Elasticsearch
+
+This section includes information on how to setup Elasticsearch and get it running, including:
+
+- Downloading
+- Installing
+- Starting
+- Configuring
+
+###Supported platforms
+
+The matrix of officially supported operating systems and JVMs is available here: [Support Matrix](https://www.elastic.co/support/matrix). Elasticsearch is tested on the listed platforms, but it is possible that it will work on other platforms too.
+
+###Java (JVM) Version
+
+Elasticsearch is built using Java, and requires at least [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) in order to run. Only Oracle’s Java and the OpenJDK are supported. The same JVM version should be used on all Elasticsearch nodes and clients.
+
+We recommend installing Java version **1.8.0_131 or a later version in the Java 8 release series**. We recommend using a [supported](https://www.elastic.co/support/matrix) [LTS version of Java](http://www.oracle.com/technetwork/java/eol-135779.html). Elasticsearch will refuse to start(拒绝启动) if a known-bad version of Java is used.
+
+The version of Java that Elasticsearch will use can be configured by setting the `JAVA_HOME`environment variable.
+
