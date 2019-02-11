@@ -2838,7 +2838,7 @@ GET  user/doc/_search
 
 
 
-#### idex_options
+#### index_options
 
 用于控制倒排索引记录的内容 有如下4中配置
 
@@ -3037,11 +3037,257 @@ GET /teacher/_mapping
 
 
 
+![](es/54.jpg)
+
+```json
+PUT  /test1/doc/1
+{
+  "username":"kakaxi",
+  "age":14,
+  "birth":"1988-10-10",
+  "married":false,
+  "year":18,
+  "tags":["boy","fashion"],
+  "money":100.1
+}
+
+GET /test1/_mapping
+{
+  "test1": {
+    "mappings": {
+      "doc": {
+        "properties": {
+          "age": {
+            "type": "long"
+          },
+          "birth": {
+            "type": "date"
+          },
+          "married": {
+            "type": "boolean"
+          },
+          "money": {
+            "type": "float"
+          },
+          "tags": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "username": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "year": {
+            "type": "long"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+日期的自动识别可以自行配置日期格式，以满洲各种需求
+
+​	默认是["strict_date_optional_time","yyyy/MM/dd HH:mm:ss Z||yyyy/MM/dd Z"]
+
+![](es/55.jpg)
+
+```json
+//设置日期根式 关闭日期识别机制
+PUT /test2
+{
+  "mappings": {
+    "doc":{
+      "dynamic_date_formats": ["yyyy-MM-dd"],
+      "date_detection": false
+    }
+  }
+}
+
+DELETE  /test2
+PUT /test2
+{
+  "mappings": {
+    "doc":{
+      "dynamic_date_formats": ["MM/dd/yyyy"]
+    }
+  }
+}
+PUT  /test2/doc/1
+{
+  "create_date":"09/25/2015"
+}
+GET  /test2/_mapping
+
+```
+
+字符串是数字时 默认不会自动识别为整型  因为字符串中出现数字时完全合理的
+
+**numeric_detection** 可以开启字符串中数字的自动识别 如下所示
+
+```json
+PUT /test3
+{
+  "mappings": {
+    "doc":{
+      "numeric_detection": true
+    }
+  }
+}
+
+PUT /test3/doc/1
+{
+  "age":"15"
+}
+
+GET /test3/_mapping
+```
 
 
-​	
 
-​	
+	#### Dynamic Template
 
-​	
+允许根据es自动识别的数据类型 字段名等来动态设定字段类型  可以实现如下效果:
+
+​	所有字符串类型都设定为keyword类型 即默认不分词
+
+​	所有以message开头的字段都设定为text类型 即分词
+
+​	所有以long_开头的字段都设定为long类型
+
+​	所有自动匹配为double类型的都设定为float类型 以节省空间
+
+​	![](es/56.jpg)
+
+![](es/57.jpg)
+
+![](es/58.jpg)
+
+
+
+```json
+PUT  /test6
+{
+  "mappings": {
+    "doc":{
+      "dynamic_templates":[
+        {
+           "message_as_text":{
+              "match_mapping_type":"string",
+              "match":"message*",
+              "mapping":{
+                "type":"text"
+              }
+            },
+          "strings_as_keyword":{
+            "match_mapping_type":"string",
+            "mapping":{
+              "type":"keyword"
+            }
+          }
+          
+        }
+        ]
+    }
+  }
+}
+```
+
+
+
+### 自定义Mapping的建议
+
+自定义Mapping的操作步骤如下：
+
+	>1.写入一条文档到es的临时索引中 获取es 自动生成的mapping
+	>
+	>2.修改步骤1得到的mapping 自定义相关配置
+	>
+	>3.使用步骤2的mapping创建时间所需的索引
+
+
+
+### 索引模板
+
+​	索引模板 因为为Index Template  主要用于在新建索引时自动应用预先设置的配置
+
+简化索引创建的操作步骤 
+
+​	可以设定索引的配置和Mapping
+
+​	可以有多个模板 根据order 设置 order大的覆盖小的配置
+
+
+
+![](es/59.jpg)
+
+![](es/60.jpg)
+
+![](es/61.jpg)
+
+![](es/62.jpg)
+
+## Search API
+
+实现对es中存储的数据进行查询分析,endpoint为_search 
+
+![](es/63.jpg)
+
+查询主要有两种形式
+
+​	URI Search
+
+​		操作简单 方便通过命令行测试
+
+​		仅包含部分查询语法
+
+​	Request Body Search
+
+​		-es提供的完备查询语法Query DSL(Domain Specific Language)
+
+```json
+GET /myindex/_search?q=user:kakaxi
+
+	GET /myindex/_search
+
+	{"query":{
+			"term":{"user":"kakaxi"}
+		}
+
+	}
+
+```
+
+### Range Query
+
+​	范围查询主要针对数值和日期类型
+
+```json
+GET /test1/doc/_search
+{
+  "query": {
+    "range": {
+      "age": {
+        "gte": 10,
+        "lte": 20
+      }
+    }
+  }
+}
+```
+
+
+
+
 
