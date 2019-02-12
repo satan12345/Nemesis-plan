@@ -1774,4 +1774,265 @@ Under failures, the following is possible:
 
 ####The Tip of the Iceberg
 
-This document provides a high level overview of how Elasticsearch deals with data. Of course, there is much much more going on under the hood. Things like primary terms, cluster state publishing and master election all play a role in keeping this system behaving correctly. This document also doesn’t cover known and important bugs (both closed and open). We recognize that [GitHub is hard to keep up with](https://github.com/elastic/elasticsearch/issues?q=label%3Aresiliency). To help people stay on top of those and we maintain a dedicated [resiliency page](https://www.elastic.co/guide/en/elasticsearch/resiliency/current/index.html) on our website. We strongly advise reading it.
+This document provides a high level overview of how Elasticsearch deals with data. Of course, there is much much more going on under the hood. Things like primary terms, cluster state publishing and master election all play a role in keeping this system behaving correctly. This document also doesn’t cover known and important bugs (both closed and open). We recognize that [GitHub is hard to keep up with](https://github.com/elastic/elasticsearch/issues?q=label%3Aresiliency). To help people stay on top of those and we maintain a dedicated [resiliency page](https://www.elastic.co/guide/en/elasticsearch/resiliency/current/index.html) on our website. We strongly advise reading it.（本文档提供了Elasticsearch如何处理数据的高级概述。 当然，还有很多事情要发生。 主要术语，集群状态发布和主选举等都可以在保持系统正常运行方面发挥作用。 本文档也未涵盖已知和重要的错误（关闭和打开）。 我们认识到GitHub很难跟上。 为了帮助人们掌握这些优势，我们在网站上维护了一个专用的弹性页面。 我们强烈建议阅读它。）
+
+### Index API
+
+The index API adds or updates a typed JSON document in a specific index, making it searchable（可被搜索到的）. The following example inserts the JSON document into the "twitter" index, under a type called `_doc` with an id of 1:
+
+```json
+PUT twitter/_doc/1
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/1.json)[ ]()
+
+The result of the above index operation is:
+
+```json
+{
+    "_shards" : {
+        "total" : 2,
+        "failed" : 0,
+        "successful" : 2
+    },
+    "_index" : "twitter",
+    "_type" : "_doc",
+    "_id" : "1",
+    "_version" : 1,
+    "_seq_no" : 0,
+    "_primary_term" : 1,
+    "result" : "created"
+}
+```
+
+The `_shards` header provides information about the replication process of the index operation.
+
+- `total` - Indicates to how many shard copies (primary and replica shards) the index operation should be executed on.
+- `successful`- Indicates the number of shard copies the index operation succeeded on.
+- `failed` - An array that contains replication related errors in the case an index operation failed on a replica shard.
+
+The index operation is successful in the case `successful` is at least 1.
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+Replica shards may not all be started when an indexing operation successfully returns (by default, only the primary is required, but this behavior can be [changed](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards)). In that case, `total` will be equal to the total shards based on the `number_of_replicas` setting and `successful` will be equal to the number of shards started (primary plus replicas). If there were no failures, the `failed` will be 0.(索引操作成功返回时，副本分片数并不是都启动了（默认情况下，只需要主分片，但可以更改此行为）。 在这种情况下，total将等于基于number_of_replicas设置的总分片数，并且success将等于已启动的分片数（primary plus replicas）。 如果没有失败，则失败将为0。)
+
+####Automatic Index Creation（自动索引创建）
+
+The index operation automatically creates an index if it does not already exist, and applies any [index templates](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/indices-templates.html) that are configured. The index operation also creates a dynamic type mapping for the specified type if one does not already exist. By default, new fields and objects will automatically be added to the mapping definition for the specified type if needed. Check out the [mapping](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/mapping.html) section for more information on mapping definitions, and the the [put mapping](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/indices-put-mapping.html) API for information about updating type mappings manually.（如果索引尚不存在，则索引操作会自动创建索引，并应用已配置的任何索引模板。 索引操作还会为指定的类型创建动态类型映射（如果尚不存在）。 默认情况下，如果需要，新字段和对象将自动添加到指定类型的映射定义中。 有关映射定义的更多信息，请查看映射部分;有关手动更新类型映射的信息，请查看put映射API。）
+
+Automatic index creation is controlled by the `action.auto_create_index` setting. This setting defaults to `true`, meaning that indices are always automatically created. Automatic index creation can be permitted only for indices matching certain patterns by changing the value of this setting to a comma-separated list of these patterns. It can also be explicitly permitted and forbidden by prefixing patterns in the list with a `+` or `-`. Finally it can be completely disabled by changing this setting to `false`.
+
+```json
+PUT _cluster/settings
+{
+    "persistent": {
+        "action.auto_create_index": "twitter,index10,-index1*,+ind*" 
+    }
+}
+
+PUT _cluster/settings
+{
+    "persistent": {
+        "action.auto_create_index": "false" 
+    }
+}
+
+PUT _cluster/settings
+{
+    "persistent": {
+        "action.auto_create_index": "true" 
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/2.json)[ ]()
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#CO37-1) | Permit(允许) only the auto-creation of indices called `twitter`, `index10`, no other index matching `index1*`, and any other index matching `ind*`. The patterns are matched in the order in which they are given. |
+| ---------------------------------------- | ---------------------------------------- |
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/2.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#CO37-2) | Completely disable the auto-creation of indices. |
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/3.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#CO37-3) | Permit the auto-creation of indices with any name. This is the default. |
+
+####Operation Type
+
+The index operation also accepts an `op_type` that can be used to force a `create` operation, allowing for "put-if-absent" behavior. When `create` is used, the index operation will fail if a document by that id already exists in the index.
+
+Here is an example of using the `op_type` parameter:
+
+```json
+PUT twitter/_doc/1?op_type=create
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/3.json)[ ]()
+
+Another option to specify `create` is to use the following uri:
+
+```
+PUT twitter/_doc/1/_create
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/4.json)[ ]()
+
+####Automatic ID Generation
+
+The index operation can be executed without specifying the id. In such a case, an id will be generated automatically. In addition, the `op_type` will automatically be set to `create`. Here is an example (note the **POST** used instead of **PUT**):
+
+```
+POST twitter/_doc/
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/5.json)[ ]()
+
+The result of the above index operation is:
+
+```
+{
+    "_shards" : {
+        "total" : 2,
+        "failed" : 0,
+        "successful" : 2
+    },
+    "_index" : "twitter",
+    "_type" : "_doc",
+    "_id" : "W0tpsmIBdwcYyG50zbta",
+    "_version" : 1,
+    "_seq_no" : 0,
+    "_primary_term" : 1,
+    "result": "created"
+}
+```
+
+####Optimistic concurrency control（乐观的并发控制）
+
+Index operations can be made optional and only be performed if the last modification to the document was assigned the sequence number and primary term specified by the `if_seq_no` and `if_primary_term` parameters. If a mismatch is detected, the operation will result in a `VersionConflictException` and a status code of 409. See [*Optimistic concurrency control*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/optimistic-concurrency-control.html) for more details.
+
+####Routing
+
+By default, shard placement — or `routing` — is controlled by using a hash of the document’s id value. For more explicit （明确的）control, the value fed into the hash function used by the router can be directly specified on a per-operation basis using the `routing` parameter. For example:
+
+```json
+POST twitter/_doc?routing=kimchy
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/6.json)[ ]()
+
+In the example above, the "_doc" document is routed to a shard based on the `routing` parameter provided: "kimchy".
+
+When setting up explicit mapping, the `_routing` field can be optionally used to direct the index operation to extract the routing value from the document itself. This does come at the (very minimal) cost of an additional document parsing pass. If the `_routing` mapping is defined and set to be `required`, the index operation will fail if no routing value is provided or extracted.
+
+####Distributed
+
+The index operation is directed to the primary shard based on its route (see the Routing section above) and performed on the actual node containing this shard. After the primary shard completes the operation, if needed, the update is distributed to applicable replicas.(索引操作根据其路由指向主分片（请参阅上面的“路由”部分），并在包含此分片的实际节点上执行。 主分片完成操作后，如果需要，更新将分发到适用的副本。)
+
+####Wait For Active Shards
+
+To improve the resiliency(弹性) of writes to the system, indexing operations can be configured to wait for a certain number of active shard copies before proceeding with the operation. If the requisite number of active shard copies are not available, then the write operation must wait and retry, until either the requisite shard copies have started or a timeout occurs. By default, write operations only wait for the primary shards to be active before proceeding (i.e. `wait_for_active_shards=1`). This default can be overridden in the index settings dynamically by setting `index.write.wait_for_active_shards`. To alter this behavior per operation, the `wait_for_active_shards` request parameter can be used.
+
+Valid values are `all` or any positive integer up to the total number of configured copies per shard in the index (which is `number_of_replicas+1`). Specifying a negative value or a number greater than the number of shard copies will throw an error.
+
+For example, suppose we have a cluster of three nodes, `A`, `B`, and `C` and we create an index `index`with the number of replicas set to 3 (resulting in 4 shard copies, one more copy than there are nodes). If we attempt an indexing operation, by default the operation will only ensure the primary copy of each shard is available before proceeding. This means that even if `B` and `C` went down, and `A` hosted the primary shard copies, the indexing operation would still proceed with only one copy of the data. If `wait_for_active_shards` is set on the request to `3` (and all 3 nodes are up), then the indexing operation will require 3 active shard copies before proceeding, a requirement which should be met because there are 3 active nodes in the cluster, each one holding a copy of the shard. However, if we set `wait_for_active_shards` to `all` (or to `4`, which is the same), the indexing operation will not proceed as we do not have all 4 copies of each shard active in the index. The operation will timeout unless a new node is brought up in the cluster to host the fourth copy of the shard.
+
+It is important to note that this setting greatly reduces the chances of the write operation not writing to the requisite number of shard copies, but it does not completely eliminate the possibility, because this check occurs before the write operation commences. Once the write operation is underway, it is still possible for replication to fail on any number of shard copies but still succeed on the primary. The `_shards` section of the write operation’s response reveals the number of shard copies on which replication succeeded/failed.
+
+```
+{
+    "_shards" : {
+        "total" : 2,
+        "failed" : 0,
+        "successful" : 2
+    }
+}
+```
+
+####Refresh
+
+Control when the changes made by this request are visible to search. See [refresh](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-refresh.html).
+
+####Noop Updates
+
+When updating a document using the index api a new version of the document is always created even if the document hasn’t changed. If this isn’t acceptable use the `_update` api with `detect_noop`set to true. This option isn’t available on the index api because the index api doesn’t fetch the old source and isn’t able to compare it against the new source.
+
+There isn’t a hard and fast rule about when noop updates aren’t acceptable. It’s a combination of lots of factors like how frequently your data source sends updates that are actually noops and how many queries per second Elasticsearch runs on the shard with receiving the updates.
+
+####Timeout
+
+The primary shard assigned to perform the index operation might not be available when the index operation is executed. Some reasons for this might be that the primary shard is currently recovering from a gateway or undergoing relocation. By default, the index operation will wait on the primary shard to become available for up to 1 minute before failing and responding with an error. The `timeout` parameter can be used to explicitly specify how long it waits. Here is an example of setting it to 5 minutes:
+
+```json
+PUT twitter/_doc/1?timeout=5m
+{
+    "user" : "kimchy",
+    "post_date" : "2009-11-15T14:12:12",
+    "message" : "trying out Elasticsearch"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/7.json)[ ]()
+
+####Versioning
+
+Each indexed document is given a version number. By default, internal versioning is used that starts at 1 and increments with each update, deletes included. Optionally, the version number can be set to an external value (for example, if maintained in a database). To enable this functionality, `version_type` should be set to `external`. The value provided must be a numeric, long value greater or equal to 0, and less than around 9.2e+18.
+
+When using the external version type, the system checks to see if the version number passed to the index request is greater than the version of the currently stored document. If true, the document will be indexed and the new version number used. If the value provided is less than or equal to the stored document’s version number, a version conflict will occur and the index operation will fail. For example:
+
+```
+PUT twitter/_doc/1?version=2&version_type=external
+{
+    "message" : "elasticsearch now has versioning support, double cool!"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-index_/8.json)[ ]()
+
+**NOTE:** versioning is completely real time, and is not affected by the near real time aspects of search operations. If no version is provided, then the operation is executed without any version checks.
+
+The above will succeed since the the supplied version of 2 is higher than the current document version of 1. If the document was already updated and its version was set to 2 or higher, the indexing command will fail and result in a conflict (409 http status code).
+
+![Warning](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/warning.png)
+
+External versioning supports the value 0 as a valid version number. This allows the version to be in sync with an external versioning system where version numbers start from zero instead of one. It has the side effect that documents with version number equal to zero can neither be updated using the [Update-By-Query API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html) nor be deleted using the [Delete By Query API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html) as long as their version number is equal to zero.
+
+A nice side effect is that there is no need to maintain strict ordering of async indexing operations executed as a result of changes to a source database, as long as version numbers from the source database are used. Even the simple case of updating the Elasticsearch index using data from a database is simplified if external versioning is used, as only the latest version will be used if the index operations arrive out of order for whatever reason.
+
+#### Version types
+
+Next to the `external` version type explained above, Elasticsearch also supports other types for specific use cases. Here is an overview of the different version types and their semantics.
+
+- `internal`
+
+  only index the document if the given version is identical to the version of the stored document.
+
+- `external` or `external_gt`
+
+  only index the document if the given version is strictly higher than the version of the stored document **or** if there is no existing document. The given version will be used as the new version and will be stored with the new document. The supplied version must be a non-negative long number.
+
+- `external_gte`
+
+  only index the document if the given version is **equal** or higher than the version of the stored document. If there is no existing document the operation will succeed as well. The given version will be used as the new version and will be stored with the new document. The supplied version must be a non-negative long number.
+
+**NOTE**: The `external_gte` version type is meant for special use cases and should be used with care. If used incorrectly, it can result in loss of data. There is another option, `force`, which is deprecated because it can cause primary and replica shards to diverge.

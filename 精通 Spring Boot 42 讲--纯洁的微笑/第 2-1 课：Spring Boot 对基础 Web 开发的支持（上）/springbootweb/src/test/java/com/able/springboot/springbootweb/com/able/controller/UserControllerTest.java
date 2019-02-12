@@ -3,15 +3,20 @@ package com.able.springboot.springbootweb.com.able.controller;
 import com.able.springboot.springbootweb.com.able.model.Hyproperties;
 import com.able.springboot.springbootweb.com.able.model.OtherProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import javax.annotation.Resource;
@@ -24,23 +29,25 @@ import javax.annotation.Resource;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@AutoConfigureMockMvc
 public class UserControllerTest {
 
     @Resource
     UserController userController;
-
+    @Resource
     MockMvc mockMvc;
 
-    @Before
-    public void init() {
-        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
-    }
+//    @Before
+//    public void init() {
+//        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
+//    }
 
     @Test
     public void testQueryUser() throws Exception {
-        String contentAsString = mockMvc.perform(MockMvcRequestBuilders.post("/getUser"))
-                .andReturn().getResponse().getContentAsString();
-        log.info("查询到的用户信息为:{}",contentAsString);
+        MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.get("/getUser"))
+                .andReturn().getResponse();
+        Assert.assertEquals(response.getStatus(), HttpStatus.OK.value());
+        log.info("查询到的用户信息为:{}",response.getContentAsString());
     }
     @Test
     public void testQueryUsers() throws Exception{
