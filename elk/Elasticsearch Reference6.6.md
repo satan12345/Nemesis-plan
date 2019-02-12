@@ -2036,3 +2036,331 @@ Next to the `external` version type explained above, Elasticsearch also supports
   only index the document if the given version is **equal** or higher than the version of the stored document. If there is no existing document the operation will succeed as well. The given version will be used as the new version and will be stored with the new document. The supplied version must be a non-negative long number.
 
 **NOTE**: The `external_gte` version type is meant for special use cases and should be used with care. If used incorrectly, it can result in loss of data. There is another option, `force`, which is deprecated because it can cause primary and replica shards to diverge.
+
+### Get API
+
+The get API allows to get a typed JSON document from the index based on its id. The following example gets a JSON document from an index called twitter, under a type called `_doc`, with id valued 0:
+
+```
+GET twitter/_doc/0
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/1.json)[ ]()
+
+The result of the above get operation is:
+
+```
+{
+    "_index" : "twitter",
+    "_type" : "_doc",
+    "_id" : "0",
+    "_version" : 1,
+    "_seq_no" : 10,
+    "_primary_term" : 1,
+    "found": true,
+    "_source" : {
+        "user" : "kimchy",
+        "date" : "2009-11-15T14:12:12",
+        "likes": 0,
+        "message" : "trying out Elasticsearch"
+    }
+}
+```
+
+The above result includes the `_index`, `_type`, `_id` and `_version` of the document we wish to 、
+
+
+
+, including the actual `_source` of the document if it could be found (as indicated by the `found`field in the response).
+
+The API also allows to check for the existence of a document using `HEAD`, for example:
+
+```
+HEAD twitter/_doc/0
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/2.json)[ ]()
+
+### Realtime[edit](https://github.com/elastic/elasticsearch/edit/6.6/docs/reference/docs/get.asciidoc)
+
+By default, the get API is realtime, and is not affected by the refresh rate of the index (when data will become visible for search). If a document has been updated but is not yet refreshed, the get API will issue a refresh call in-place to make the document visible. This will also make other documents changed since the last refresh visible. In order to disable realtime GET, one can set the `realtime`parameter to `false`.
+
+### Source filtering[edit](https://github.com/elastic/elasticsearch/edit/6.6/docs/reference/docs/get.asciidoc)
+
+By default, the get operation returns the contents of the `_source` field unless you have used the `stored_fields` parameter or if the `_source` field is disabled. You can turn off `_source` retrieval by using the `_source` parameter:
+
+```
+GET twitter/_doc/0?_source=false
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/3.json)[ ]()
+
+If you only need one or two fields from the complete `_source`, you can use the `_source_includes` & `_source_excludes` parameters to include or filter out that parts you need. This can be especially helpful with large documents where partial retrieval can save on network overhead. Both parameters take a comma separated list of fields or wildcard expressions. Example:
+
+```
+GET twitter/_doc/0?_source_includes=*.id&_source_excludes=entities
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/4.json)[ ]()
+
+If you only want to specify includes, you can use a shorter notation:
+
+```
+GET twitter/_doc/0?_source=*.id,retweeted
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/5.json)[ ]()
+
+####Stored Fields
+
+The get operation allows specifying(指定) a set of stored fields that will be returned by passing the `stored_fields` parameter. If the requested fields are not stored, they will be ignored. Consider for instance the following mapping:
+
+```json
+PUT twitter
+{
+   "mappings": {
+      "_doc": {
+         "properties": {
+            "counter": {
+               "type": "integer",
+               "store": false
+            },
+            "tags": {
+               "type": "keyword",
+               "store": true
+            }
+         }
+      }
+   }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/6.json)[ ]()
+
+Now we can add a document:
+
+```json
+PUT twitter/_doc/1
+{
+    "counter" : 1,
+    "tags" : ["red"]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/7.json)[ ]()
+
+1. and try to retrieve it:
+
+```
+GET twitter/_doc/1?stored_fields=tags,counter
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/8.json)[ ]()
+
+The result of the above get operation is:
+
+```
+{
+   "_index": "twitter",
+   "_type": "_doc",
+   "_id": "1",
+   "_version": 1,
+   "_seq_no" : 22,
+   "_primary_term" : 1,
+   "found": true,
+   "fields": {
+      "tags": [
+         "red"
+      ]
+   }
+}
+```
+
+Field values fetched from the document itself are always returned as an array. Since the `counter`field is not stored the get request simply ignores it when trying to get the `stored_fields.`
+
+It is also possible to retrieve metadata fields like the `_routing` field:
+
+```
+PUT twitter/_doc/2?routing=user1
+{
+    "counter" : 1,
+    "tags" : ["white"]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/9.json)[ ]()
+
+```
+GET twitter/_doc/2?routing=user1&stored_fields=tags,counter
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/10.json)[ ]()
+
+The result of the above get operation is:
+
+```
+{
+   "_index": "twitter",
+   "_type": "_doc",
+   "_id": "2",
+   "_version": 1,
+   "_seq_no" : 13,
+   "_primary_term" : 1,
+   "_routing": "user1",
+   "found": true,
+   "fields": {
+      "tags": [
+         "white"
+      ]
+   }
+}
+```
+
+Also only leaf fields can be returned via the `stored_field` option. So object fields can’t be returned and such requests will fail.
+
+####Getting the `_source` directly
+
+Use the `/{index}/{type}/{id}/_source` endpoint to get just the `_source` field of the document, without any additional content around it. For example:
+
+```
+GET twitter/_doc/1/_source
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/11.json)[ ]()
+
+You can also use the same source filtering parameters to control which parts of the `_source` will be returned:
+
+```
+GET twitter/_doc/1/_source?_source_includes=*.id&_source_excludes=entities'
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/12.json)[ ]()
+
+Note, there is also a HEAD variant(变种) for the _source endpoint to efficiently test for document _source existence（存在）. An existing document will not have a _source if it is disabled in the [mapping](https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html).
+
+```
+HEAD twitter/_doc/1/_source
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/13.json)[ ]()
+
+####Routing
+
+When indexing using the ability to control the routing, in order to get a document, the routing value should also be provided. For example:
+
+```
+GET twitter/_doc/2?routing=user1
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-get/14.json)[ ]()
+
+The above will get a tweet with id `2`, but will be routed based on the user. Note, issuing a get without the correct routing, will cause the document not to be fetched.（注意，在没有正确路由的情况下发出get将导致不提取文档。）
+
+####Preference（偏好）
+
+Controls a `preference` of which shard replicas to execute the get request on. By default, the operation is randomized between the shard replicas.
+
+The `preference` can be set to:
+
+- `_primary`
+
+  The operation will go and be executed only on the primary shards.
+
+- `_local`
+
+  The operation will prefer to be executed on a local allocated shard if possible.
+
+- Custom (string) value
+
+  A custom value will be used to guarantee that the same shards will be used for the same custom value. This can help with "jumping values" when hitting different shards in different refresh states. A sample value can be something like the web session id, or the user name.
+
+####Refresh
+
+The `refresh` parameter can be set to `true` in order to refresh the relevant（相关的） shard before the get operation and make it searchable. Setting it to `true` should be done after careful thought and verification that this does not cause a heavy load on the system (and slows down indexing).
+
+####Distributed
+
+The get operation gets hashed into a specific shard id. It then gets redirected to one of the replicas within that shard id and returns the result. The replicas are the primary shard and its replicas within that shard id group. This means that the more replicas we will have, the better GET scaling (扩展)we will have.
+
+####Versioning support
+
+You can use the `version` parameter to retrieve（获取） the document only if its current version is equal to the specified one. This behavior is the same for all version types with the exception of version type `FORCE` which always retrieves the document. Note that `FORCE` version type is deprecated.（只有当文档的当前版本等于指定版本时，才能使用version参数检索（获取）文档。 除了始终检索文档的版本类型FORCE之外，所有版本类型的此行为都相同。 请注意，不推荐使用FORCE版本类型。）
+
+Internally, Elasticsearch has marked the old document as deleted and added an entirely（完全的） new document. The old version of the document doesn’t disappear immediately, although you won’t be able to access it. Elasticsearch cleans up deleted documents in the background as you continue to index more data.
+
+### Delete API
+
+The delete API allows to delete a typed JSON document from a specific index based on its id. The following example deletes the JSON document from an index called `twitter`, under a type called `_doc`, with id `1`:
+
+```
+DELETE /twitter/_doc/1
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-delete/1.json)[ ]()
+
+The result of the above delete operation is:
+
+```
+{
+    "_shards" : {
+        "total" : 2,
+        "failed" : 0,
+        "successful" : 2
+    },
+    "_index" : "twitter",
+    "_type" : "_doc",
+    "_id" : "1",
+    "_version" : 2,
+    "_primary_term": 1,
+    "_seq_no": 5,
+    "result": "deleted"
+}
+```
+
+####Optimistic concurrency control(乐观并发控制)
+
+Delete operations can be made optional and only be performed if the last modification to the document was assigned the sequence number and primary term specified by the `if_seq_no` and `if_primary_term` parameters. If a mismatch is detected, the operation will result in a `VersionConflictException` and a status code of 409. See [*Optimistic concurrency control*](https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html) for more details.
+
+####Versioning
+
+Each document indexed is versioned. When deleting a document, the `version` can be specified to make sure the relevant document we are trying to delete is actually being deleted and it has not changed in the meantime. Every write operation executed on a document, deletes included, causes its version to be incremented. The version number of a deleted document remains available for a short time after deletion to allow for control of concurrent operations. The length of time for which a deleted document’s version remains available is determined by the `index.gc_deletes` index setting and defaults to 60 seconds.（索引的每个文档都是版本化的。 删除文档时，可以指定版本以确保我们尝试删除的相关文档实际上已被删除，并且在此期间没有更改。 对文档执行的每个写入操作（包括删除）都会导致其版本递增。 删除文档的版本号在删除后仍可短时间使用，以便控制并发操作。 已删除文档的版本保持可用的时间长度由index.gc_deletes索引设置确定，默认为60秒。）
+
+####Routing
+
+When indexing using the ability to control the routing, in order to delete a document, the routing value should also be provided. For example:
+
+```
+DELETE /twitter/_doc/1?routing=kimchy
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-delete/2.json)[ ]()
+
+The above will delete a tweet with id `1`, but will be routed based on the user. Note, issuing a delete without the correct routing, will cause the document to not be deleted.
+
+When the `_routing` mapping is set as `required` and no routing value is specified, the delete api will throw a `RoutingMissingException` and reject the request.
+
+####Automatic index creation
+
+If an [external versioning variant](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html) is used, the delete operation automatically creates an index if it has not been created before (check out the [create index API](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html) for manually creating an index), and also automatically creates a dynamic type mapping for the specific type if it has not been created before (check out the [put mapping](https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-put-mapping.html) API for manually creating type mapping).（如果使用外部版本控制变体，则删除操作会自动创建索引（如果之前尚未创建索引）（请参阅创建索引API以手动创建索引），并且还会自动为特定类型创建动态类型映射（如果它 之前尚未创建（请查看put mapping API以手动创建类型映射））
+
+####Distributed
+
+The delete operation gets hashed into a specific shard id. It then gets redirected into the primary shard within that id group, and replicated (if needed) to shard replicas within that id group.
+
+####Wait For Active Shards
+
+When making delete requests, you can set the `wait_for_active_shards` parameter to require a minimum number of shard copies to be active before starting to process the delete request. See[here](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-wait-for-active-shards) for further details and a usage example.
+
+####Refresh
+
+Control when the changes made by this request are visible to search. See [*?refresh*](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-refresh.html).
+
+####Timeout
+
+The primary shard assigned to perform the delete operation might not be available when the delete operation is executed. Some reasons for this might be that the primary shard is currently recovering from a store or undergoing relocation. By default, the delete operation will wait on the primary shard to become available for up to 1 minute before failing and responding with an error. The `timeout` parameter can be used to explicitly specify how long it waits. Here is an example of setting it to 5 minutes:
+
+```
+DELETE /twitter/_doc/1?timeout=5m
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-delete/3.json)[ ]()
