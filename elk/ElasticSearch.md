@@ -886,6 +886,8 @@ elasticsearch.url 待访问的elasticsearch的地址
 
 
 
+
+
 ### Kibana常用功能说明
 
 - Discover数据搜索查看
@@ -3438,7 +3440,7 @@ GET  test_search_index/doc/_search?q=birth:(>1980 AND <1990)
  - timeout
  - sort
 
-​	![](es/71.jpg)
+  ​![](es/71.jpg)
 
 
 
@@ -3530,7 +3532,19 @@ GET  test_search_index/doc/_search
 
 
 
+### 相关性算分
 
+相关性算分是指文档与查询语句间的相关度
+
+​	通过倒排索引 可以获取与查询语句想匹配的文档列表  那么如何将最符合用户查询的需求的文档放到前列呢
+
+​	本质是一个排序问题  排序的已经是相关性算分
+
+相关性算分的几个重要概念:
+
+​	Term Frequency(TF) 词频 即单词在该文档出现的次数 词频越高 相关度越高
+
+​	Do
 
 ### Range Query
 
