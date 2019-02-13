@@ -959,35 +959,41 @@ POST /lib2
 
 #给索引lib2创建映射类型
 
-{
 
+
+    POST /lib2
+    {
     "settings":{
-
     "number_of_shards" : 3,
-
     "number_of_replicas" : 0
-
     },
-
      "mappings":{
-
-      "books":{
-
-        "properties":{
-
-            "title":{"type":"text"},
-            "name":{"type":"text","index":false},
-            "publish_date":{"type":"date","index":false},
-            
-            "price":{"type":"double"},
-            
-            "number":{"type":"integer"}
+     	  "_doc":{
+     	  		  "properties":{
+     	  		   "title":{"type":"text"},
+                   "name":{"type":"text","index":false},
+                   "publish_date":{"type":"date","index":false},
+                   "price":{"type":"double"},
+                   "number":{"type":"integer"}
         }
       }
      }
-}
+     }
 
-POST /lib2
+
+
+
+
+
+
+
+  
+
+​       
+
+
+
+
 
 #给索引lib2创建映射类型
 {
@@ -1025,8 +1031,9 @@ POST /lib2
 
 #### 2.7.1数据准备
 
-PUT /lib3
-{
+
+    PUT /lib3
+    {
     "settings":{
     "number_of_shards" : 3,
     "number_of_replicas" : 0
@@ -1042,7 +1049,8 @@ PUT /lib3
         }
       }
      }
-}
+     }
+
 
 GET /lib3/user/_search?q=name:lisi
 

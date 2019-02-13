@@ -2364,3 +2364,1618 @@ DELETE /twitter/_doc/1?timeout=5m
 ```
 
 [COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/current/snippets/docs-delete/3.json)[ ]()
+
+### Delete By Query API
+
+The simplest usage of `_delete_by_query` just performs a deletion on every document that match a query. Here is the API:
+
+```json
+POST twitter/_delete_by_query
+{
+  "query": { 
+    "match": {
+      "message": "some message"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/1.json)[ ]()
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html#CO38-1) | The query must be passed as a value to the `query` key, in the same way as the [Search API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-search.html). You can also use the `q` parameter in the same way as the search api. |
+| ---------------------------------------- | ---------------------------------------- |
+|                                          |                                          |
+
+That will return something like this:
+
+```json
+{
+  "took" : 147,
+  "timed_out": false,
+  "deleted": 119,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1.0,
+  "throttled_until_millis": 0,
+  "total": 119,
+  "failures" : [ ]
+}
+```
+
+`_delete_by_query` gets a snapshot of the index when it starts and deletes what it finds using `internal` versioning. That means that you’ll get a version conflict if the document changes between the time when the snapshot was taken and when the delete request is processed. When the versions match the document is deleted.
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+Since `internal` versioning does not support the value 0 as a valid version number, documents with version equal to zero cannot be deleted using `_delete_by_query` and will fail the request.
+
+During the `_delete_by_query` execution, multiple（多） search requests are sequentially(顺序的) executed in order to find all the matching documents to delete. Every time a batch of documents is found, a corresponding bulk request is executed to delete all these documents. In case a search or bulk request got rejected, `_delete_by_query` relies on a default policy to retry rejected requests (up to 10 times, with exponential back off). Reaching the maximum retries limit causes the `_delete_by_query`to abort and all failures are returned in the `failures` of the response. The deletions that have been performed still stick. In other words, the process is not rolled back, only aborted. While the first failure causes the abort, all failures that are returned by the failing bulk request are returned in the `failures` element; therefore it’s possible for there to be quite a few failed entities.（在_delete_by_query执行期间，将按顺序执行多个搜索请求，以便查找要删除的所有匹配文档。 每次找到一批文档时，都会执行相应的批量请求以删除所有这些文档。 如果搜索或批量请求被拒绝，_delete_by_query依赖于默认策略来重试被拒绝的请求（最多10次，指数退回）。 达到最大重试次数限制会导致_delete_by_query中止，并且在响应失败时返回所有失败。 已执行的删除仍然有效。 换句话说，该过程不会回滚，只会中止。 当第一个故障导致中止时，失败的批量请求返回的所有故障都将在failure元素中返回; 因此，可能存在相当多的失败实体。）
+
+If you’d like to count version conflicts rather than cause them to abort then set `conflicts=proceed`on the url or `"conflicts": "proceed"` in the request body.
+
+Back to the API format, this will delete tweets from the `twitter` index:
+
+```json
+POST twitter/_doc/_delete_by_query?conflicts=proceed
+{
+  "query": {
+    "match_all": {}
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/2.json)[ ]()
+
+It’s also possible to delete documents of multiple indexes and multiple types at once, just like the search API:
+
+```
+POST twitter,blog/_docs,post/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/3.json)[ ]()
+
+If you provide `routing` then the routing is copied to the scroll query, limiting the process to the shards that match that routing value:(如果提供路由，则路由将复制到滚动查询，从而将进程限制为与该路由值匹配的分片)
+
+```json
+POST twitter/_delete_by_query?routing=1
+{
+  "query": {
+    "range" : {
+        "age" : {
+           "gte" : 10
+        }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/4.json)[ ]()
+
+By default `_delete_by_query` uses scroll batches of 1000. You can change the batch size with the `scroll_size` URL parameter:
+
+```json
+POST twitter/_delete_by_query?scroll_size=5000
+{
+  "query": {
+    "term": {
+      "user": "kimchy"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/5.json)[ ]()
+
+####URL Parameters
+
+In addition to the standard parameters like `pretty`, the Delete By Query API also supports `refresh`, `wait_for_completion`, `wait_for_active_shards`, `timeout` and `scroll`.
+
+Sending the `refresh` will refresh all shards involved in the delete by query once the request completes. This is different than the Delete API’s `refresh` parameter which causes just the shard that received the delete request to be refreshed. Also unlike the Delete API it does not support `wait_for`.
+
+If the request contains `wait_for_completion=false` then Elasticsearch will perform some preflight checks(预检查), launch the request, and then return a `task` which can be used with [Tasks APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html#docs-delete-by-query-task-api) to cancel or get the status of the task. Elasticsearch will also create a record of this task as a document at `.tasks/task/${taskId}`. This is yours to keep or remove as you see fit. When you are done with it, delete it so Elasticsearch can reclaim the space it uses.（如果请求包含wait_for_completion = false，则Elasticsearch将执行一些预检检查，启动请求，然后返回可与Tasks API一起使用的任务，以取消或获取任务的状态。 Elasticsearch还将在.tasks / task / $ {taskId}中创建此任务的记录作为文档。 这是你的保留或删除你认为合适。 完成后，删除它，以便Elasticsearch可以回收它使用的空间。）
+
+`wait_for_active_shards` controls how many copies of a shard must be active before proceeding with the request. See [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards) for details. `timeout` controls how long each write request waits for unavailable shards to become available. Both work exactly how they work in the [Bulk API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-bulk.html). As `_delete_by_query`uses scroll search, you can also specify the `scroll` parameter to control how long it keeps the "search context" alive, eg `?scroll=10m`, by default it’s 5 minutes.（wait_for_active_shards控制在继续请求之前必须激活碎片的副本数。 详情请见此处。 timeout指示每个写入请求等待不可用分片可用的时间。 两者都完全适用于Bulk API中的工作方式。 当_delete_by_queryuses滚动搜索时，您还可以指定scroll参数来控制它保持“搜索上下文”活动的时间，例如？scroll = 10m，默认情况下为5分钟。）
+
+`requests_per_second` can be set to any positive decimal number (`1.4`, `6`, `1000`, etc) and throttles rate at which `_delete_by_query` issues batches of delete operations by padding each batch with a wait time. The throttling can be disabled by setting `requests_per_second` to `-1`.
+
+The throttling is done by waiting between batches so that scroll that `_delete_by_query` uses internally can be given a timeout that takes into account the padding. The padding time is the difference between the batch size divided by the `requests_per_second` and the time spent writing. By default the batch size is `1000`, so if the `requests_per_second` is set to `500`:
+
+```
+target_time = 1000 / 500 per second = 2 seconds
+wait_time = target_time - write_time = 2 seconds - .5 seconds = 1.5 seconds
+```
+
+Since the batch is issued as a single `_bulk` request large batch sizes will cause Elasticsearch to create many requests and then wait for a while before starting the next set. This is "bursty" instead of "smooth". The default is `-1`.
+
+####Response body
+
+The JSON response looks like this:
+
+```
+{
+  "took" : 147,
+  "timed_out": false,
+  "total": 119,
+  "deleted": 119,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1.0,
+  "throttled_until_millis": 0,
+  "failures" : [ ]
+}
+```
+
+- `took`
+
+  The number of milliseconds from start to end of the whole operation.
+
+- `timed_out`
+
+  This flag is set to `true` if any of the requests executed during the delete by query execution has timed out.
+
+- `total`
+
+  The number of documents that were successfully processed.
+
+- `deleted`
+
+  The number of documents that were successfully deleted.
+
+- `batches`
+
+  The number of scroll responses pulled back by the delete by query.
+
+- `version_conflicts`
+
+  The number of version conflicts that the delete by query hit.
+
+- `noops`
+
+  This field is always equal to zero for delete by query. It only exists so that delete by query, update by query and reindex APIs return responses with the same structure.
+
+- `retries`
+
+  The number of retries attempted by delete by query. `bulk` is the number of bulk actions retried and `search` is the number of search actions retried.
+
+- `throttled_millis`
+
+  Number of milliseconds the request slept to conform to `requests_per_second`.
+
+- `requests_per_second`
+
+  The number of requests per second effectively executed during the delete by query.
+
+- `throttled_until_millis`
+
+  This field should always be equal to zero in a `_delete_by_query` response. It only has meaning when using the [Task API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html#docs-delete-by-query-task-api), where it indicates the next time (in milliseconds since epoch) a throttled request will be executed again in order to conform to `requests_per_second`.
+
+- `failures`
+
+  Array of failures if there were any unrecoverable errors during the process. If this is non-empty then the request aborted because of those failures. Delete-by-query is implemented using batches and any failure causes the entire process to abort but all failures in the current batch are collected into the array. You can use the `conflicts` option to prevent reindex from aborting on version conflicts.
+
+####Works with the Task API
+
+You can fetch the status of any running delete-by-query requests with the [Task API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html):
+
+```
+GET _tasks?detailed=true&actions=*/delete/byquery
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/6.json)[ ]()
+
+The responses looks like:
+
+```
+{
+  "nodes" : {
+    "r1A2WoRbTwKZ516z6NEs5A" : {
+      "name" : "r1A2WoR",
+      "transport_address" : "127.0.0.1:9300",
+      "host" : "127.0.0.1",
+      "ip" : "127.0.0.1:9300",
+      "attributes" : {
+        "testattr" : "test",
+        "portsfile" : "true"
+      },
+      "tasks" : {
+        "r1A2WoRbTwKZ516z6NEs5A:36619" : {
+          "node" : "r1A2WoRbTwKZ516z6NEs5A",
+          "id" : 36619,
+          "type" : "transport",
+          "action" : "indices:data/write/delete/byquery",
+          "status" : {    
+            "total" : 6154,
+            "updated" : 0,
+            "created" : 0,
+            "deleted" : 3500,
+            "batches" : 36,
+            "version_conflicts" : 0,
+            "noops" : 0,
+            "retries": 0,
+            "throttled_millis": 0
+          },
+          "description" : ""
+        }
+      }
+    }
+  }
+}
+```
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html#CO39-1) | this object contains the actual status. It is just like the response json with the important addition of the `total` field. `total` is the total number of operations that the reindex expects to perform. You can estimate the progress by adding the `updated`, `created`, and `deleted` fields. The request will finish when their sum is equal to the `total` field. |
+| ---------------------------------------- | ---------------------------------------- |
+|                                          |                                          |
+
+With the task id you can look up the task directly:
+
+```
+GET /_tasks/r1A2WoRbTwKZ516z6NEs5A:36619
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/7.json)[ ]()
+
+The advantage of this API is that it integrates with `wait_for_completion=false` to transparently return the status of completed tasks. If the task is completed and `wait_for_completion=false` was set on it then it’ll come back with `results` or an `error` field. The cost of this feature is the document that `wait_for_completion=false` creates at `.tasks/task/${taskId}`. It is up to you to delete that document.
+
+####Works with the Cancel Task API
+
+Any Delete By Query can be canceled using the [task cancel API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html):
+
+```
+POST _tasks/r1A2WoRbTwKZ516z6NEs5A:36619/_cancel
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/8.json)[ ]()
+
+The task ID can be found using the [tasks API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html).
+
+Cancellation should happen quickly but might take a few seconds. The task status API above will continue to list the delete by query task until this task checks that it has been cancelled and terminates itself.
+
+####Rethrottling
+
+The value of `requests_per_second` can be changed on a running delete by query using the `_rethrottle` API:
+
+```
+POST _delete_by_query/r1A2WoRbTwKZ516z6NEs5A:36619/_rethrottle?requests_per_second=-1
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/9.json)[ ]()
+
+The task ID can be found using the [tasks API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html).
+
+Just like when setting it on the `_delete_by_query` API `requests_per_second` can be either `-1` to disable throttling or any decimal number like `1.7` or `12` to throttle to that level. Rethrottling that speeds up the query takes effect immediately but rethrotting that slows down the query will take effect on after completing the current batch. This prevents scroll timeouts.
+
+####Slicing（切片）
+
+Delete-by-query supports [Sliced Scroll](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-scroll.html#sliced-scroll) to parallelize（并行） the deleting process. This parallelization can improve efficiency and provide a convenient way to break the request down into smaller parts.
+
+#### Manually slicing
+
+Slice a delete-by-query manually by providing a slice id and total number of slices to each request:
+
+```
+POST twitter/_delete_by_query
+{
+  "slice": {
+    "id": 0,
+    "max": 2
+  },
+  "query": {
+    "range": {
+      "likes": {
+        "lt": 10
+      }
+    }
+  }
+}
+POST twitter/_delete_by_query
+{
+  "slice": {
+    "id": 1,
+    "max": 2
+  },
+  "query": {
+    "range": {
+      "likes": {
+        "lt": 10
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/10.json)[ ]()
+
+Which you can verify works with:
+
+```
+GET _refresh
+POST twitter/_search?size=0&filter_path=hits.total
+{
+  "query": {
+    "range": {
+      "likes": {
+        "lt": 10
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/11.json)[ ]()
+
+Which results in a sensible `total` like this one:
+
+```
+{
+  "hits": {
+    "total": 0
+  }
+}
+```
+
+#### Automatic slicing
+
+You can also let delete-by-query automatically parallelize using [Sliced Scroll](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-scroll.html#sliced-scroll) to slice on `_uid`. Use `slices` to specify the number of slices to use:
+
+```
+POST twitter/_delete_by_query?refresh&slices=5
+{
+  "query": {
+    "range": {
+      "likes": {
+        "lt": 10
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/12.json)[ ]()
+
+Which you also can verify works with:
+
+```
+POST twitter/_search?size=0&filter_path=hits.total
+{
+  "query": {
+    "range": {
+      "likes": {
+        "lt": 10
+      }
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-delete-by-query/13.json)[ ]()
+
+Which results in a sensible `total` like this one:
+
+```
+{
+  "hits": {
+    "total": 0
+  }
+}
+```
+
+Setting `slices` to `auto` will let Elasticsearch choose the number of slices to use. This setting will use one slice per shard, up to a certain limit. If there are multiple source indices, it will choose the number of slices based on the index with the smallest number of shards.
+
+Adding `slices` to `_delete_by_query` just automates the manual process used in the section above, creating sub-requests which means it has some quirks:
+
+- You can see these requests in the [Tasks APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-delete-by-query.html#docs-delete-by-query-task-api). These sub-requests are "child" tasks of the task for the request with `slices`.
+- Fetching the status of the task for the request with `slices` only contains the status of completed slices.
+- These sub-requests are individually addressable for things like cancellation and rethrottling.
+- Rethrottling the request with `slices` will rethrottle the unfinished sub-request proportionally.
+- Canceling the request with `slices` will cancel each sub-request.
+- Due to the nature of `slices` each sub-request won’t get a perfectly even portion of the documents. All documents will be addressed, but some slices may be larger than others. Expect larger slices to have a more even distribution.
+- Parameters like `requests_per_second` and `size` on a request with `slices` are distributed proportionally to each sub-request. Combine that with the point above about distribution being uneven and you should conclude that the using `size` with `slices` might not result in exactly `size` documents being `_delete_by_query`ed.
+- Each sub-requests gets a slightly different snapshot of the source index though these are all taken at approximately the same time.
+
+##### Picking the number of slices
+
+If slicing automatically, setting `slices` to `auto` will choose a reasonable number for most indices. If you’re slicing manually or otherwise tuning automatic slicing, use these guidelines.
+
+Query performance is most efficient when the number of `slices` is equal to the number of shards in the index. If that number is large, (for example, 500) choose a lower number as too many `slices` will hurt performance. Setting `slices` higher than the number of shards generally does not improve efficiency and adds overhead.
+
+Delete performance scales linearly across available resources with the number of slices.
+
+Whether query or delete performance dominates the runtime depends on the documents being reindexed and cluster resources.
+
+### Update API
+
+The update API allows to update a document based on a script provided. The operation gets the document (collocated with the shard) from the index, runs the script (with optional script language and parameters), and index back the result (also allows to delete, or ignore the operation). It uses versioning to make sure no updates have happened during the "get" and "reindex".
+
+Note, this operation still means full reindex of the document, it just removes some network roundtrips and reduces chances of version conflicts between the get and the index. The `_source`field needs to be enabled for this feature to work.
+
+For example, let’s index a simple doc:
+
+```
+PUT test/_doc/1
+{
+    "counter" : 1,
+    "tags" : ["red"]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/1.json)[ ]()
+
+####Scripted updates
+
+```json
+POST test/_doc/1/_update
+{
+    "script" : {
+        "source": "ctx._source.counter += params.count",
+        "lang": "painless",
+        "params" : {
+            "count" : 4
+        }
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/2.json)[ ]()
+
+We can add a tag to the list of tags (note, if the tag exists, it will still add it, since it’s a list):
+
+```json
+POST test/_doc/1/_update
+{
+    "script" : {
+        "source": "ctx._source.tags.add(params.tag)",
+        "lang": "painless",
+        "params" : {
+            "tag" : "blue"
+        }
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/3.json)[ ]()
+
+We can remove a tag from the list of tags. Note that the Painless function to `remove` a tag takes as its parameter the array index of the element you wish to remove, so you need a bit more logic to locate it while avoiding a runtime error. Note that if the tag was present more than once in the list, this will remove only one occurrence of it:
+
+```json
+POST test/_doc/1/_update
+{
+    "script" : {
+        "source": "if (ctx._source.tags.contains(params.tag)) { ctx._source.tags.remove(ctx._source.tags.indexOf(params.tag)) }",
+        "lang": "painless",
+        "params" : {
+            "tag" : "blue"
+        }
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/4.json)[ ]()
+
+In addition to `_source`, the following variables are available through the `ctx` map: `_index`, `_type`, `_id`, `_version`, `_routing` and `_now` (the current timestamp).
+
+We can also add a new field to the document:
+
+```json
+POST test/_doc/1/_update
+{
+    "script" : "ctx._source.new_field = 'value_of_new_field'"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/5.json)[ ]()
+
+Or remove a field from the document:
+
+```
+POST test/_doc/1/_update
+{
+    "script" : "ctx._source.remove('new_field')"
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/6.json)[ ]()
+
+And, we can even change the operation that is executed. This example deletes the doc if the `tags`field contain `green`, otherwise it does nothing (`noop`):
+
+```
+POST test/_doc/1/_update
+{
+    "script" : {
+        "source": "if (ctx._source.tags.contains(params.tag)) { ctx.op = 'delete' } else { ctx.op = 'none' }",
+        "lang": "painless",
+        "params" : {
+            "tag" : "green"
+        }
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/7.json)[ ]()
+
+####Updates with a partial document
+
+The update API also support passing a partial document, which will be merged into the existing document (simple recursive merge, inner merging of objects, replacing core "keys/values" and arrays). To fully replace the existing document, the [`index` API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html) should be used instead. The following partial update adds a new field to the existing document:
+
+```
+POST test/_doc/1/_update
+{
+    "doc" : {
+        "name" : "new_name"
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/8.json)[ ]()
+
+If both `doc` and `script` are specified, then `doc` is ignored. Best is to put your field pairs of the partial document in the script itself.
+
+####Detecting noop updates
+
+If `doc` is specified its value is merged with the existing `_source`. By default updates that don’t change anything detect that they don’t change anything and return "result": "noop" like this:
+
+```
+POST test/_doc/1/_update
+{
+    "doc" : {
+        "name" : "new_name"
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/9.json)[ ]()
+
+If `name` was `new_name` before the request was sent then the entire update request is ignored. The `result` element in the response returns `noop` if the request was ignored.
+
+```
+{
+   "_shards": {
+        "total": 0,
+        "successful": 0,
+        "failed": 0
+   },
+   "_index": "test",
+   "_type": "_doc",
+   "_id": "1",
+   "_version": 7,
+   "result": "noop"
+}
+```
+
+You can disable this behavior by setting "detect_noop": false like this:
+
+```
+POST test/_doc/1/_update
+{
+    "doc" : {
+        "name" : "new_name"
+    },
+    "detect_noop": false
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/10.json)[ ]()
+
+####Upserts
+
+If the document does not already exist, the contents of the `upsert` element will be inserted as a new document. If the document does exist, then the `script` will be executed instead:
+
+```
+POST test/_doc/1/_update
+{
+    "script" : {
+        "source": "ctx._source.counter += params.count",
+        "lang": "painless",
+        "params" : {
+            "count" : 4
+        }
+    },
+    "upsert" : {
+        "counter" : 1
+    }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/11.json)[ ]()
+
+#### `scripted_upsert`
+
+If you would like your script to run regardless of whether the document exists or not — i.e. the script handles initializing the document instead of the `upsert` element — then set `scripted_upsert` to `true`:(如果您希望脚本运行，无论文档是否存在 - 即脚本处理初始化文档而不是upsert元素 - 然后将scripted_upsert设置为true)
+
+```
+POST sessions/session/dh3sgudg8gsrgl/_update
+{
+    "scripted_upsert":true,
+    "script" : {
+        "id": "my_web_session_summariser",
+        "params" : {
+            "pageViewEvent" : {
+                "url":"foo.com/bar",
+                "response":404,
+                "time":"2014-01-01 12:32"
+            }
+        }
+    },
+    "upsert" : {}
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/12.json)[ ]()
+
+#### `doc_as_upsert`
+
+Instead of sending a partial `doc` plus an `upsert` doc, setting `doc_as_upsert` to `true` will use the contents of `doc` as the `upsert` value:
+
+```
+POST test/_doc/1/_update
+{
+    "doc" : {
+        "name" : "new_name"
+    },
+    "doc_as_upsert" : true
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update/13.json)[ ]()
+
+#####Parameters
+
+The update operation supports the following query-string parameters:
+
+| `retry_on_conflict`      | In between the get and indexing phases of the update, it is possible that another process might have already updated the same document. By default, the update will fail with a version conflict exception. The `retry_on_conflict` parameter controls how many times to retry the update before finally throwing an exception. |
+| ------------------------ | ---------------------------------------- |
+| `routing`                | Routing is used to route the update request to the right shard and sets the routing for the upsert request if the document being updated doesn’t exist. Can’t be used to update the routing of an existing document. |
+| `timeout`                | Timeout waiting for a shard to become available. |
+| `wait_for_active_shards` | The number of shard copies required to be active before proceeding with the update operation. See [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards) for details. |
+| `refresh`                | Control when the changes made by this request are visible to search. See [*?refresh*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-refresh.html). |
+| `_source`                | Allows to control if and how the updated source should be returned in the response. By default the updated source is not returned. See [`source filtering`](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-source-filtering.html) for details. |
+| `version`                | The update API uses the Elasticsearch’s versioning support internally to make sure the document doesn’t change during the update. You can use the `version` parameter to specify that the document should only be updated if its version matches the one specified. |
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+####The update API does not support versioning other than internal
+
+External (version types `external` & `external_gte`) or forced (version type `force`) versioning is not supported by the update API as it would result in Elasticsearch version numbers being out of sync with the external system. Use the [`index` API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html) instead.
+
+### Update By Query API
+
+The simplest usage（用法） of `_update_by_query` just performs an update on every document in the index without changing the source. This is useful to [pick up a new property](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#picking-up-a-new-property) or some other online mapping change. Here is the API:
+
+```
+POST twitter/_update_by_query?conflicts=proceed
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/1.json)[ ]()
+
+That will return something like this:
+
+```
+{
+  "took" : 147,
+  "timed_out": false,
+  "updated": 120,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1.0,
+  "throttled_until_millis": 0,
+  "total": 120,
+  "failures" : [ ]
+}
+```
+
+`_update_by_query` gets a snapshot of the index when it starts and indexes what it finds using `internal` versioning. That means that you’ll get a version conflict if the document changes between the time when the snapshot was taken and when the index request is processed. When the versions match the document is updated and the version number is incremented.
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+Since `internal` versioning does not support the value 0 as a valid version number, documents with version equal to zero cannot be updated using `_update_by_query` and will fail the request.
+
+All update and query failures cause the `_update_by_query` to abort and are returned in the `failures`of the response. The updates that have been performed still stick. In other words, the process is not rolled back, only aborted. While the first failure causes the abort, all failures that are returned by the failing bulk request are returned in the `failures` element; therefore it’s possible for there to be quite a few failed entities.
+
+If you want to simply count version conflicts not cause the `_update_by_query` to abort you can set `conflicts=proceed` on the url or `"conflicts": "proceed"` in the request body. The first example does this because it is just trying to pick up an online mapping change and a version conflict simply means that the conflicting document was updated between the start of the `_update_by_query` and the time when it attempted to update the document. This is fine because that update will have picked up the online mapping update.
+
+Back to the API format, this will update tweets from the `twitter` index:
+
+```
+POST twitter/_doc/_update_by_query?conflicts=proceed
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/2.json)[ ]()
+
+You can also limit `_update_by_query` using the [Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/query-dsl.html). This will update all documents from the`twitter` index for the user `kimchy`:
+
+```
+POST twitter/_update_by_query?conflicts=proceed
+{
+  "query": { 
+    "term": {
+      "user": "kimchy"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/3.json)[ ]()
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#CO40-1) | The query must be passed as a value to the `query` key, in the same way as the [Search API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-search.html). You can also use the `q` parameter in the same way as the search api. |
+| ---------------------------------------- | ---------------------------------------- |
+|                                          |                                          |
+
+So far we’ve only been updating documents without changing their source. That is genuinely useful for things like [picking up new properties](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#picking-up-a-new-property) but it’s only half the fun. `_update_by_query` [supports scripts](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/modules-scripting-using.html)to update the document. This will increment the `likes` field on all of kimchy’s tweets:
+
+```
+POST twitter/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.likes++",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "user": "kimchy"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/4.json)[ ]()
+
+Just as in [Update API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update.html) you can set `ctx.op` to change the operation that is executed:
+
+- `noop`
+
+  Set `ctx.op = "noop"` if your script decides that it doesn’t have to make any changes. That will cause `_update_by_query` to omit that document from its updates. This no operation will be reported in the `noop` counter in the [response body](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#docs-update-by-query-response-body).
+
+- `delete`
+
+  Set `ctx.op = "delete"` if your script decides that the document must be deleted. The deletion will be reported in the `deleted` counter in the [response body](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#docs-update-by-query-response-body).
+
+Setting `ctx.op` to anything else is an error. Setting any other field in `ctx` is an error.
+
+Note that we stopped specifying `conflicts=proceed`. In this case we want a version conflict to abort the process so we can handle the failure.
+
+This API doesn’t allow you to move the documents it touches, just modify their source. This is intentional! We’ve made no provisions for removing the document from its original location.
+
+It’s also possible to do this whole thing on multiple indexes and multiple types at once, just like the search API:
+
+```
+POST twitter,blog/_doc,post/_update_by_query
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/5.json)[ ]()
+
+If you provide `routing` then the routing is copied to the scroll query, limiting the process to the shards that match that routing value:
+
+```
+POST twitter/_update_by_query?routing=1
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/6.json)[ ]()
+
+By default `_update_by_query` uses scroll batches of 1000. You can change the batch size with the `scroll_size` URL parameter:
+
+```
+POST twitter/_update_by_query?scroll_size=100
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/7.json)[ ]()
+
+`_update_by_query` can also use the [Ingest Node](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/ingest.html) feature by specifying a `pipeline` like this:
+
+```
+PUT _ingest/pipeline/set-foo
+{
+  "description" : "sets foo",
+  "processors" : [ {
+      "set" : {
+        "field": "foo",
+        "value": "bar"
+      }
+  } ]
+}
+POST twitter/_update_by_query?pipeline=set-foo
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/8.json)[ ]()
+
+####URL Parameters
+
+In addition to the standard parameters like `pretty`, the Update By Query API also supports `refresh`, `wait_for_completion`, `wait_for_active_shards`, `timeout` and `scroll`.
+
+Sending the `refresh` will update all shards in the index being updated when the request completes. This is different than the Update API’s `refresh` parameter which causes just the shard that received the new data to be indexed. Also unlike the Update API it does not support `wait_for`.
+
+If the request contains `wait_for_completion=false` then Elasticsearch will perform some preflight checks, launch the request, and then return a `task` which can be used with [Tasks APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#docs-update-by-query-task-api) to cancel or get the status of the task. Elasticsearch will also create a record of this task as a document at `.tasks/task/${taskId}`. This is yours to keep or remove as you see fit. When you are done with it, delete it so Elasticsearch can reclaim the space it uses.
+
+`wait_for_active_shards` controls how many copies of a shard must be active before proceeding with the request. See [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards) for details. `timeout` controls how long each write request waits for unavailable shards to become available. Both work exactly how they work in the [Bulk API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-bulk.html). As `_update_by_query`uses scroll search, you can also specify the `scroll` parameter to control how long it keeps the "search context" alive, eg `?scroll=10m`, by default it’s 5 minutes.
+
+`requests_per_second` can be set to any positive decimal number (`1.4`, `6`, `1000`, etc) and throttles rate at which `_update_by_query` issues batches of index operations by padding each batch with a wait time. The throttling can be disabled by setting `requests_per_second` to `-1`.
+
+The throttling is done by waiting between batches so that scroll that `_update_by_query` uses internally can be given a timeout that takes into account the padding. The padding time is the difference between the batch size divided by the `requests_per_second` and the time spent writing. By default the batch size is `1000`, so if the `requests_per_second` is set to `500`:
+
+```
+target_time = 1000 / 500 per second = 2 seconds
+wait_time = target_time - write_time = 2 seconds - .5 seconds = 1.5 seconds
+```
+
+Since the batch is issued as a single `_bulk` request large batch sizes will cause Elasticsearch to create many requests and then wait for a while before starting the next set. This is "bursty" instead of "smooth". The default is `-1`.
+
+####Response body
+
+The JSON response looks like this:
+
+```
+{
+  "took" : 147,
+  "timed_out": false,
+  "total": 5,
+  "updated": 5,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1.0,
+  "throttled_until_millis": 0,
+  "failures" : [ ]
+}
+```
+
+- `took`
+
+  The number of milliseconds from start to end of the whole operation.
+
+- `timed_out`
+
+  This flag is set to `true` if any of the requests executed during the update by query execution has timed out.
+
+- `total`
+
+  The number of documents that were successfully processed.
+
+- `updated`
+
+  The number of documents that were successfully updated.
+
+- `deleted`
+
+  The number of documents that were successfully deleted.
+
+- `batches`
+
+  The number of scroll responses pulled back by the update by query.
+
+- `version_conflicts`
+
+  The number of version conflicts that the update by query hit.
+
+- `noops`
+
+  The number of documents that were ignored because the script used for the update by query returned a `noop` value for `ctx.op`.
+
+- `retries`
+
+  The number of retries attempted by update-by-query. `bulk` is the number of bulk actions retried and `search` is the number of search actions retried.
+
+- `throttled_millis`
+
+  Number of milliseconds the request slept to conform to `requests_per_second`.
+
+- `requests_per_second`
+
+  The number of requests per second effectively executed during the update by query.
+
+- `throttled_until_millis`
+
+  This field should always be equal to zero in an `_update_by_query` response. It only has meaning when using the [Task API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#docs-update-by-query-task-api), where it indicates the next time (in milliseconds since epoch) a throttled request will be executed again in order to conform to `requests_per_second`.
+
+- `failures`
+
+  Array of failures if there were any unrecoverable errors during the process. If this is non-empty then the request aborted because of those failures. Update-by-query is implemented using batches and any failure causes the entire process to abort but all failures in the current batch are collected into the array. You can use the `conflicts` option to prevent reindex from aborting on version conflicts.
+
+####Works with the Task API
+
+You can fetch the status of all running update-by-query requests with the [Task API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html):
+
+```
+GET _tasks?detailed=true&actions=*byquery
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/9.json)[ ]()
+
+The responses looks like:
+
+```
+{
+  "nodes" : {
+    "r1A2WoRbTwKZ516z6NEs5A" : {
+      "name" : "r1A2WoR",
+      "transport_address" : "127.0.0.1:9300",
+      "host" : "127.0.0.1",
+      "ip" : "127.0.0.1:9300",
+      "attributes" : {
+        "testattr" : "test",
+        "portsfile" : "true"
+      },
+      "tasks" : {
+        "r1A2WoRbTwKZ516z6NEs5A:36619" : {
+          "node" : "r1A2WoRbTwKZ516z6NEs5A",
+          "id" : 36619,
+          "type" : "transport",
+          "action" : "indices:data/write/update/byquery",
+          "status" : {    
+            "total" : 6154,
+            "updated" : 3500,
+            "created" : 0,
+            "deleted" : 0,
+            "batches" : 4,
+            "version_conflicts" : 0,
+            "noops" : 0,
+            "retries": {
+              "bulk": 0,
+              "search": 0
+            },
+            "throttled_millis": 0
+          },
+          "description" : ""
+        }
+      }
+    }
+  }
+}
+```
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#CO41-1) | this object contains the actual status. It is just like the response json with the important addition of the `total` field. `total` is the total number of operations that the reindex expects to perform. You can estimate the progress by adding the `updated`, `created`, and `deleted` fields. The request will finish when their sum is equal to the `total` field. |
+| ---------------------------------------- | ---------------------------------------- |
+|                                          |                                          |
+
+With the task id you can look up the task directly. The following example retrieves information about task `r1A2WoRbTwKZ516z6NEs5A:36619`:
+
+```
+GET /_tasks/r1A2WoRbTwKZ516z6NEs5A:36619
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/10.json)[ ]()
+
+The advantage of this API is that it integrates with `wait_for_completion=false` to transparently return the status of completed tasks. If the task is completed and `wait_for_completion=false` was set on it them it’ll come back with a `results` or an `error` field. The cost of this feature is the document that `wait_for_completion=false` creates at `.tasks/task/${taskId}`. It is up to you to delete that document.
+
+####Works with the Cancel Task API
+
+Any Update By Query can be canceled using the [Task Cancel API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html):
+
+```
+POST _tasks/r1A2WoRbTwKZ516z6NEs5A:36619/_cancel
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/11.json)[ ]()
+
+The task ID can be found using the [tasks API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html).
+
+Cancellation should happen quickly but might take a few seconds. The task status API above will continue to list the update by query task until this task checks that it has been cancelled and terminates itself.
+
+####Rethrottling
+
+The value of `requests_per_second` can be changed on a running update by query using the `_rethrottle` API:
+
+```
+POST _update_by_query/r1A2WoRbTwKZ516z6NEs5A:36619/_rethrottle?requests_per_second=-1
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/12.json)[ ]()
+
+The task ID can be found using the [tasks API](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/tasks.html).
+
+Just like when setting it on the `_update_by_query` API `requests_per_second` can be either `-1` to disable throttling or any decimal number like `1.7` or `12` to throttle to that level. Rethrottling that speeds up the query takes effect immediately but rethrotting that slows down the query will take effect on after completing the current batch. This prevents scroll timeouts.
+
+####Slicing
+
+Update-by-query supports [Sliced Scroll](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-scroll.html#sliced-scroll) to parallelize the updating process. This parallelization can improve efficiency and provide a convenient way to break the request down into smaller parts.
+
+#### Manual slicing
+
+Slice an update-by-query manually by providing a slice id and total number of slices to each request:
+
+```
+POST twitter/_update_by_query
+{
+  "slice": {
+    "id": 0,
+    "max": 2
+  },
+  "script": {
+    "source": "ctx._source['extra'] = 'test'"
+  }
+}
+POST twitter/_update_by_query
+{
+  "slice": {
+    "id": 1,
+    "max": 2
+  },
+  "script": {
+    "source": "ctx._source['extra'] = 'test'"
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/13.json)[ ]()
+
+Which you can verify works with:
+
+```
+GET _refresh
+POST twitter/_search?size=0&q=extra:test&filter_path=hits.total
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/14.json)[ ]()
+
+Which results in a sensible `total` like this one:
+
+```
+{
+  "hits": {
+    "total": 120
+  }
+}
+```
+
+#### Automatic slicing
+
+You can also let update-by-query automatically parallelize using [Sliced Scroll](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/search-request-scroll.html#sliced-scroll) to slice on `_uid`. Use `slices` to specify the number of slices to use:
+
+```
+POST twitter/_update_by_query?refresh&slices=5
+{
+  "script": {
+    "source": "ctx._source['extra'] = 'test'"
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/15.json)[ ]()
+
+Which you also can verify works with:
+
+```
+POST twitter/_search?size=0&q=extra:test&filter_path=hits.total
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/16.json)[ ]()
+
+Which results in a sensible `total` like this one:
+
+```
+{
+  "hits": {
+    "total": 120
+  }
+}
+```
+
+Setting `slices` to `auto` will let Elasticsearch choose the number of slices to use. This setting will use one slice per shard, up to a certain limit. If there are multiple source indices, it will choose the number of slices based on the index with the smallest number of shards.
+
+Adding `slices` to `_update_by_query` just automates the manual process used in the section above, creating sub-requests which means it has some quirks:
+
+- You can see these requests in the [Tasks APIs](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#docs-update-by-query-task-api). These sub-requests are "child" tasks of the task for the request with `slices`.
+- Fetching the status of the task for the request with `slices` only contains the status of completed slices.
+- These sub-requests are individually addressable for things like cancellation and rethrottling.
+- Rethrottling the request with `slices` will rethrottle the unfinished sub-request proportionally.
+- Canceling the request with `slices` will cancel each sub-request.
+- Due to the nature of `slices` each sub-request won’t get a perfectly even portion of the documents. All documents will be addressed, but some slices may be larger than others. Expect larger slices to have a more even distribution.
+- Parameters like `requests_per_second` and `size` on a request with `slices` are distributed proportionally to each sub-request. Combine that with the point above about distribution being uneven and you should conclude that the using `size` with `slices` might not result in exactly `size` documents being `_update_by_query`ed.
+- Each sub-requests gets a slightly different snapshot of the source index though these are all taken at approximately the same time.
+
+##### Picking the number of slices
+
+If slicing automatically, setting `slices` to `auto` will choose a reasonable number for most indices. If you’re slicing manually or otherwise tuning automatic slicing, use these guidelines.
+
+Query performance is most efficient when the number of `slices` is equal to the number of shards in the index. If that number is large, (for example, 500) choose a lower number as too many `slices` will hurt performance. Setting `slices` higher than the number of shards generally does not improve efficiency and adds overhead.
+
+Update performance scales linearly across available resources with the number of slices.
+
+Whether query or update performance dominates the runtime depends on the documents being reindexed and cluster resources.
+
+####Pick up a new property
+
+Say you created an index without dynamic mapping, filled it with data, and then added a mapping value to pick up more fields from the data:
+
+```
+PUT test
+{
+  "mappings": {
+    "_doc": {
+      "dynamic": false,   
+      "properties": {
+        "text": {"type": "text"}
+      }
+    }
+  }
+}
+
+POST test/_doc?refresh
+{
+  "text": "words words",
+  "flag": "bar"
+}
+POST test/_doc?refresh
+{
+  "text": "words words",
+  "flag": "foo"
+}
+PUT test/_mapping/_doc   
+{
+  "properties": {
+    "text": {"type": "text"},
+    "flag": {"type": "text", "analyzer": "keyword"}
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/17.json)[ ]()
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#CO42-1) | This means that new fields won’t be indexed, just stored in `_source`. |
+| ---------------------------------------- | ---------------------------------------- |
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/2.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-update-by-query.html#CO42-2) | This updates the mapping to add the new `flag` field. To pick up the new field you have to reindex all documents with it. |
+
+Searching for the data won’t find anything:
+
+```
+POST test/_search?filter_path=hits.total
+{
+  "query": {
+    "match": {
+      "flag": "foo"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/18.json)[ ]()
+
+```
+{
+  "hits" : {
+    "total" : 0
+  }
+}
+```
+
+But you can issue an `_update_by_query` request to pick up the new mapping:
+
+```
+POST test/_update_by_query?refresh&conflicts=proceed
+POST test/_search?filter_path=hits.total
+{
+  "query": {
+    "match": {
+      "flag": "foo"
+    }
+  }
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-update-by-query/19.json)[ ]()
+
+```
+{
+  "hits" : {
+    "total" : 1
+  }
+}
+```
+
+You can do the exact same thing when adding a field to a multifield.
+
+### Multi Get API
+
+Multi GET API allows to get multiple documents based on an index, type (optional) and id (and possibly routing). The response includes a `docs` array with all the fetched documents in order corresponding to the original multi-get request (if there was a failure for a specific get, an object containing this error is included in place in the response instead). The structure of a successful get is similar in structure to a document provided by the [get](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-get.html) API.
+
+Here is an example:
+
+```
+GET /_mget
+{
+    "docs" : [
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "1"
+        },
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "2"
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/1.json)[ ]()
+
+The `mget` endpoint can also be used against an index (in which case it is not required in the body):
+
+```
+GET /test/_mget
+{
+    "docs" : [
+        {
+            "_type" : "_doc",
+            "_id" : "1"
+        },
+        {
+            "_type" : "_doc",
+            "_id" : "2"
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/2.json)[ ]()
+
+And type:
+
+```
+GET /test/_doc/_mget
+{
+    "docs" : [
+        {
+            "_id" : "1"
+        },
+        {
+            "_id" : "2"
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/3.json)[ ]()
+
+In which case, the `ids` element can directly be used to simplify the request:
+
+```
+GET /test/_doc/_mget
+{
+    "ids" : ["1", "2"]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/4.json)[ ]()
+
+####Source filtering
+
+By default, the `_source` field will be returned for every document (if stored). Similar to the [get](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-get.html#get-source-filtering) API, you can retrieve only parts of the `_source` (or not at all) by using the `_source` parameter. You can also use the url parameters `_source`,`_source_includes` & `_source_excludes` to specify defaults, which will be used when there are no per-document instructions.
+
+For example:
+
+```json
+GET /_mget
+{
+    "docs" : [
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "1",
+            "_source" : false
+        },
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "2",
+            "_source" : ["field3", "field4"]
+        },
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "3",
+            "_source" : {
+                "include": ["user"],
+                "exclude": ["user.location"]
+            }
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/5.json)[ ]()
+
+####Fields
+
+Specific stored fields can be specified to be retrieved per document to get, similar to the [stored_fields](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-get.html#get-stored-fields) parameter of the Get API. For example:
+
+```
+GET /_mget
+{
+    "docs" : [
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "1",
+            "stored_fields" : ["field1", "field2"]
+        },
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "2",
+            "stored_fields" : ["field3", "field4"]
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/6.json)[ ]()
+
+Alternatively(作为选择), you can specify the `stored_fields` parameter in the query string as a default to be applied to all documents.
+
+```
+GET /test/_doc/_mget?stored_fields=field1,field2
+{
+    "docs" : [
+        {
+            "_id" : "1" 
+        },
+        {
+            "_id" : "2",
+            "stored_fields" : ["field3", "field4"] 
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/7.json)[ ]()
+
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/1.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-multi-get.html#CO43-1) | Returns `field1` and `field2` |
+| ---------------------------------------- | ----------------------------- |
+| [![img](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/callouts/2.png)](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-multi-get.html#CO43-2) | Returns `field3` and `field4` |
+
+####Routing
+
+You can also specify routing value as a parameter:
+
+```
+GET /_mget?routing=key1
+{
+    "docs" : [
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "1",
+            "routing" : "key2"
+        },
+        {
+            "_index" : "test",
+            "_type" : "_doc",
+            "_id" : "2"
+        }
+    ]
+}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-multi-get/8.json)[ ]()
+
+In this example, document `test/_doc/2` will be fetch from shard corresponding to routing key `key1`but document `test/_doc/1` will be fetch from shard corresponding to routing key `key2`.
+
+####Security
+
+See [*URL-based access control*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/url-access-control.html)
+
+### Bulk API
+
+The bulk API makes it possible to perform many index/delete operations in a single API call. This can greatly increase the indexing speed.
+
+**Client support for bulk requests**
+
+Some of the officially supported clients provide helpers to assist with bulk requests and reindexing of documents from one index to another:
+
+- Perl
+
+  See [Search::Elasticsearch::Client::5_0::Bulk](https://metacpan.org/pod/Search::Elasticsearch::Client::5_0::Bulk) and [Search::Elasticsearch::Client::5_0::Scroll](https://metacpan.org/pod/Search::Elasticsearch::Client::5_0::Scroll)
+
+- Python
+
+  See [elasticsearch.helpers.*](http://elasticsearch-py.readthedocs.org/en/master/helpers.html)
+
+The REST API endpoint is `/_bulk`, and it expects the following newline delimited JSON (NDJSON) structure:
+
+```
+action_and_meta_data\n
+optional_source\n
+action_and_meta_data\n
+optional_source\n
+....
+action_and_meta_data\n
+optional_source\n
+```
+
+**NOTE**: the final line of data must end with a newline character `\n`. Each newline character may be preceded by a carriage return `\r`. When sending requests to this endpoint the `Content-Type` header should be set to `application/x-ndjson`.
+
+The possible actions are `index`, `create`, `delete` and `update`. `index` and `create` expect a source on the next line, and have the same semantics(语义) as the `op_type` parameter to the standard index API (i.e. create will fail if a document with the same index and type exists already, whereas index will add or replace a document as necessary). `delete` does not expect a source on the following line, and has the same semantics as the standard delete API. `update` expects that the partial doc, upsert and script and its options are specified on the next line.
+
+If you’re providing text file input to `curl`, you **must** use the `--data-binary` flag instead of plain `-d`. The latter doesn’t preserve newlines. Example:
+
+```
+$ cat requests
+{ "index" : { "_index" : "test", "_type" : "_doc", "_id" : "1" } }
+{ "field1" : "value1" }
+$ curl -s -H "Content-Type: application/x-ndjson" -XPOST localhost:9200/_bulk --data-binary "@requests"; echo
+{"took":7, "errors": false, "items":[{"index":{"_index":"test","_type":"_doc","_id":"1","_version":1,"result":"created","forced_refresh":false}}]}
+```
+
+Because this format uses literal `\n`'s as delimiters, please be sure that the JSON actions and sources are not pretty printed. Here is an example of a correct sequence of bulk commands:
+
+```
+POST _bulk
+{ "index" : { "_index" : "test", "_type" : "_doc", "_id" : "1" } }
+{ "field1" : "value1" }
+{ "delete" : { "_index" : "test", "_type" : "_doc", "_id" : "2" } }
+{ "create" : { "_index" : "test", "_type" : "_doc", "_id" : "3" } }
+{ "field1" : "value3" }
+{ "update" : {"_id" : "1", "_type" : "_doc", "_index" : "test"} }
+{ "doc" : {"field2" : "value2"} }
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-bulk/1.json)[ ]()
+
+The result of this bulk operation is:
+
+```
+{
+   "took": 30,
+   "errors": false,
+   "items": [
+      {
+         "index": {
+            "_index": "test",
+            "_type": "_doc",
+            "_id": "1",
+            "_version": 1,
+            "result": "created",
+            "_shards": {
+               "total": 2,
+               "successful": 1,
+               "failed": 0
+            },
+            "status": 201,
+            "_seq_no" : 0,
+            "_primary_term": 1
+         }
+      },
+      {
+         "delete": {
+            "_index": "test",
+            "_type": "_doc",
+            "_id": "2",
+            "_version": 1,
+            "result": "not_found",
+            "_shards": {
+               "total": 2,
+               "successful": 1,
+               "failed": 0
+            },
+            "status": 404,
+            "_seq_no" : 1,
+            "_primary_term" : 2
+         }
+      },
+      {
+         "create": {
+            "_index": "test",
+            "_type": "_doc",
+            "_id": "3",
+            "_version": 1,
+            "result": "created",
+            "_shards": {
+               "total": 2,
+               "successful": 1,
+               "failed": 0
+            },
+            "status": 201,
+            "_seq_no" : 2,
+            "_primary_term" : 3
+         }
+      },
+      {
+         "update": {
+            "_index": "test",
+            "_type": "_doc",
+            "_id": "1",
+            "_version": 2,
+            "result": "updated",
+            "_shards": {
+                "total": 2,
+                "successful": 1,
+                "failed": 0
+            },
+            "status": 200,
+            "_seq_no" : 3,
+            "_primary_term" : 4
+         }
+      }
+   ]
+}
+```
+
+The endpoints are `/_bulk`, `/{index}/_bulk`, and `{index}/{type}/_bulk`. When the index or the index/type are provided, they will be used by default on bulk items that don’t provide them explicitly.
+
+A note on the format. The idea here is to make processing of this as fast as possible. As some of the actions will be redirected to other shards on other nodes, only `action_meta_data` is parsed on the receiving node side.
+
+Client libraries using this protocol should try and strive to do something similar on the client side, and reduce buffering as much as possible.
+
+The response to a bulk action is a large JSON structure with the individual（单独的） results of each action that was performed in the same order as the actions that appeared in the request. The failure of a single action does not affect the remaining actions.
+
+There is no "correct" number of actions to perform in a single bulk call. You should experiment with different settings to find the optimum（最适宜的） size for your particular workload.
+
+If using the HTTP API, make sure that the client does not send HTTP chunks, as this will slow things down.
+
+####Optimistic Concurrency Control
+
+Each `index` and `delete` action within a bulk API call may include the `if_seq_no` and `if_primary_term`parameters in their respective action and meta data lines. The `if_seq_no` and `if_primary_term`parameters control how operations are executed, based on the last modification to existing documents. See [*Optimistic concurrency control*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/optimistic-concurrency-control.html) for more details.
+
+####Versioning
+
+Each bulk item can include the version value using the `version` field. It automatically follows the behavior of the index / delete operation based on the `_version` mapping. It also support the `version_type` (see [versioning](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-versioning))
+
+####Routing
+
+Each bulk item can include the routing value using the `routing` field. It automatically follows the behavior of the index / delete operation based on the `_routing` mapping.
+
+####Wait For Active Shards
+
+When making bulk calls, you can set the `wait_for_active_shards` parameter to require a minimum number of shard copies to be active before starting to process the bulk request. See [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-index_.html#index-wait-for-active-shards) for further details and a usage example.
+
+####Refresh
+
+Control when the changes made by this request are visible to search. See [refresh](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/docs-refresh.html).
+
+![Note](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/images/icons/note.png)
+
+Only the shards that receive the bulk request will be affected by `refresh`. Imagine a `_bulk?refresh=wait_for` request with three documents in it that happen to be routed to different shards in an index with five shards. The request will only wait for those three shards to refresh. The other two shards of that make up the index do not participate(参与) in the `_bulk` request at all.
+
+####Update
+
+When using `update` action `retry_on_conflict` can be used as field in the action itself (not in the extra payload line), to specify how many times an update should be retried in the case of a version conflict.
+
+The `update` action payload, supports the following options: `doc` (partial document), `upsert`, `doc_as_upsert`, `script`, `params` (for script), `lang` (for script) and `_source`. See update documentation for details on the options. Example with update actions:
+
+```json
+POST _bulk
+{ "update" : {"_id" : "1", "_type" : "_doc", "_index" : "index1", "retry_on_conflict" : 3} }
+{ "doc" : {"field" : "value"} }
+{ "update" : { "_id" : "0", "_type" : "_doc", "_index" : "index1", "retry_on_conflict" : 3} }
+{ "script" : { "source": "ctx._source.counter += params.param1", "lang" : "painless", "params" : {"param1" : 1}}, "upsert" : {"counter" : 1}}
+{ "update" : {"_id" : "2", "_type" : "_doc", "_index" : "index1", "retry_on_conflict" : 3} }
+{ "doc" : {"field" : "value"}, "doc_as_upsert" : true }
+{ "update" : {"_id" : "3", "_type" : "_doc", "_index" : "index1", "_source" : true} }
+{ "doc" : {"field" : "value"} }
+{ "update" : {"_id" : "4", "_type" : "_doc", "_index" : "index1"} }
+{ "doc" : {"field" : "value"}, "_source": true}
+```
+
+[COPY AS CURL]()[VIEW IN CONSOLE](http://localhost:5601/app/kibana#/dev_tools/console?load_from=https://www.elastic.co/guide/en/elasticsearch/reference/6.6/snippets/docs-bulk/2.json)[ ]()
+
+####Security
+
+See [*URL-based access control*](https://www.elastic.co/guide/en/elasticsearch/reference/6.6/url-access-control.html)
