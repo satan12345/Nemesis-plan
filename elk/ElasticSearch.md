@@ -3648,3 +3648,92 @@ GET test_index/doc/_search
 
 ![](es/69.jpg)
 
+### 龙果ES
+
+```json
+//查看集群的健康状况
+GET /_cluster/health
+{
+  "cluster_name" : "elasticsearch",
+  "status" : "yellow",
+  "timed_out" : false,
+  "number_of_nodes" : 1,
+  "number_of_data_nodes" : 1,
+  "active_primary_shards" : 93,
+  "active_shards" : 93,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 60,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 60.78431372549019
+}
+
+```
+
+```json
+//查看集群的信息
+GET _cat/health?v
+epoch      timestamp cluster       status node.total node.data shards pri relo init unassign pending_tasks max_task_wait_time active_shards_percent
+1550662542 11:35:42  elasticsearch yellow          1         1     93  93    0    0       60             0                  -                 60.8%
+
+```
+
+```json
+//查看集群中的索引
+GET _cat/indices?v
+health status index                           uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   .monitoring-es-6-2019.02.19     JLvrNW86QMqPAYApRTFqgQ   1   0     302700         1661    152.8mb        152.8mb
+
+```
+
+
+
+```json
+//创建索引
+PUT /test_index
+{
+  "acknowledged" : true,
+  "shards_acknowledged" : true,
+  "index" : "test_index"
+}
+//删除索引
+DELETE /test_index
+{
+  "acknowledged" : true
+}
+
+```
+
+```json
+//插入数据
+PUT /eco/doc/1
+{
+  "name":"gaolujie yagao",
+  "desc":"gaoxiao meibai",
+  "price":30,
+  "producer":"gaolujie producer",
+  "tags":["meibai","fangzhu"]
+}
+
+PUT /eco/doc/2
+{
+  "name":"jiajieshi yagao",
+  "desc":"youxiao fangzhu",
+  "price":25,
+  "producer":"jiajieshi producer",
+  "tags":["fangzhu"]
+}
+
+PUT /eco/doc/3
+{
+  "name":"zhonghua yagao",
+  "desc":"caoben zhiwu",
+  "price":40,
+  "producer":"zhonghua producer",
+  "tags":["qingxin"]
+}
+```
+
