@@ -1,4 +1,5 @@
-									# ElasticSearch
+# ElasticSearch
+
 
 ## 1 什么是ElasticSearch
 
@@ -3808,5 +3809,188 @@ DELETE /eco/doc/1
 
 
 
+```
+
+### P7
+
+query string search
+
+​	GET /eco/_search?q=name:yagao&sort=price:desc
+
+query DSL
+
+```json
+#查询所有商品
+GET /eco/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+# 查询名称包含牙膏 降序排序
+GET /eco/_search
+{
+  "query": {
+    "match": {
+      "name": "yagao"
+    }
+  },
+  "sort": [
+    {
+      "price": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+#分页查询商品
+GET /eco/_search
+{
+  "query": {
+    "match": {
+      "name": "yagao"
+    }
+  },
+  "sort": [
+    {
+      "price": {
+        "order": "desc"
+      }
+    }
+  ],
+  "from": 1,
+  "size": 1
+}
+
+#指定商品名称和价格
+GET /eco/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "_source": ["name","price"]
+}
+
+
+
+PUT /eco/doc/4
+{
+   "name" : "special yagao",
+          "desc" : "tianran xuanku",
+          "price" : 50,
+          "producer" : "special yagao producer",
+          "tags" : [
+            "special"
+          ]
+}
+
+GET /eco/_search
+{
+  "query": {
+    "match": {
+      "producer":"yagao producer"
+    }
+  }
+}
+
+GET /eco/_search
+{
+  "query": {
+    "match_phrase": {
+      "producer": "yagao  producer"
+    }
+  }
+}
+
+GET /eco/_search
+{
+  "query": {
+    "match": {
+      "name": "yagao"
+    }
+  },
+  "highlight": {
+    "fields": {
+      "name": {}
+    }
+  }
+}
+```
+
+
+
+query filter
+
+```json
+//名称包含牙膏 且价格大于25的
+GET /eco/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"match": {
+          "name": "yagao"
+        }}
+      ],
+      "filter": {
+        "range": {
+          "price": {
+            "gt": 25
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+aggs
+
+```json
+PUT /eco/_mapping/doc
+{
+  "properties": {
+    "tags":{
+      "type": "text", 
+      "fielddata": true
+    }
+  }
+}
+//计算每个tag 下商品数量
+GET /eco/_search
+{
+  "size": 0, 
+  "aggs": {
+    "group_by_tags": {
+      "terms": {
+        "field": "tags",
+        "size": 10
+      }
+    }
+  }
+}
+
+```
+
+```json
+
+#名称中包含牙膏的商品按照tag分组
+GET /eco/_search
+{
+  "size": 0, 
+  "query": {
+    "match": {
+      "name": "yagao"
+    }
+  },
+  "aggs": {
+    "group_by_tag": {
+      "terms": {
+        "field": "tags"
+
+      }
+    }
+  }
+}
 ```
 
