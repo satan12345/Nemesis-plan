@@ -3735,5 +3735,78 @@ PUT /eco/doc/3
   "producer":"zhonghua producer",
   "tags":["qingxin"]
 }
+//响应
+{
+  "_index" : "eco",
+  "_type" : "doc",
+  "_id" : "1",
+  "_version" : 1,
+  "result" : "created",
+  "_shards" : {
+    "total" : 2,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "_seq_no" : 1,
+  "_primary_term" : 1
+}
+
+//查询
+GET /eco/doc/1
+{
+  "_index" : "eco",
+  "_type" : "doc",
+  "_id" : "1",
+  "_version" : 1,
+  "_seq_no" : 0,
+  "_primary_term" : 1,
+  "found" : true,
+  "_source" : {
+    "name" : "gaolujie yagao",
+    "desc" : "gaoxiao meibai",
+    "price" : 30,
+    "producer" : "gaolujie producer",
+    "tags" : [
+      "meibai",
+      "fangzhu"
+    ]
+  }
+}
+//更新 part更新
+POST /eco/doc/1/_update
+{
+  "doc": {
+    "name":"jiaqiang gaolujie yagao"
+  }
+}
+//更新 全量
+PUT /eco/doc/1
+{
+   "name":"gaolujie yagaoxxxx",
+  "desc":"gaoxiao meibai",
+  "price":30,
+  "producer":"gaolujie producer",
+  "tags":["meibai","fangzhu"]
+}
+//删除 
+DELETE /eco/doc/1
+//响应
+{
+  "_index" : "eco",
+  "_type" : "doc",
+  "_id" : "1",
+  "_version" : 3,
+  "result" : "deleted",
+  "_shards" : {
+    "total" : 2,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "_seq_no" : 2,
+  "_primary_term" : 1
+}
+
+
+
 ```
 
