@@ -1,3 +1,5 @@
+
+
 # ElasticSearch
 
 
@@ -3901,16 +3903,18 @@ GET /eco/_search
     }
   }
 }
-
+//高亮
 GET /eco/_search
 {
   "query": {
-    "match": {
-      "name": "yagao"
+    "multi_match": {
+      "query": "yagao",
+      "fields": ["name","producer"]
     }
   },
   "highlight": {
     "fields": {
+      "producer": {},
       "name": {}
     }
   }
@@ -3992,5 +3996,157 @@ GET /eco/_search
     }
   }
 }
+//按照tag分组后 求平均价格 再排序
+GET /eco/_search
+{
+  "size": 0, 
+  "aggs": {
+    "group_by_tag": {
+      "terms": {
+        "field": "tags"
+        , "order": {
+          "price_avg": "asc"
+        }
+      },
+      "aggs": {
+        "price_avg": {
+          "avg": {
+            "field": "price"
+          }
+        }
+      }
+    }
+  }
+}
+
+GET /eco/_search
+{
+  "size":0,
+  "aggs": {
+    "price_range": {
+      "range": {
+        "field": "price",
+        "ranges": [
+          {
+            "from": 0,
+            "to": 20
+          },
+          {
+            "from": 20,
+            "to": 40
+          },
+           {
+            "from": 40,
+            "to": 60
+          }
+        ]
+      },
+      "aggs": {
+        "group_by_tag": {
+          "terms": {
+            "field": "tags"
+          },
+          "aggs": {
+            "avg_price": {
+              "avg": {
+                "field": "price"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 ```
+
+
+
+version
+
+version_type=external
+
+version_type=external，唯一的区别在于，_version，只有当你提供的version与es中的_version一模一样的时候，才可以进行修改，只要不一样，就报错；当version_type=external的时候，只有当你提供的version比es中的_version大的时候，才能完成修改
+
+
+
+partial update
+
+```json
+POST /mytest/doc/1/_update
+{
+  "doc": {
+    "age":23
+  }
+}
+```
+
+脚本 parical update
+
+```json
+POST /mytest/doc/1/_update
+{
+  "script": {
+    "source": "ctx._source.age+=1"
+  }
+}
+```
+
+```json
+//指定冲突后的尝试次数
+POST /mytest/doc/3/_update?retry_on_conflict=5
+{
+  "script": {
+    "source": "ctx._source.age+=1"
+  }
+  , "upsert": {
+    "skill":["leiqie"],
+    "age":1
+  }
+}
+```
+
+### 26
+
+mget
+
+```json
+GET /lib8/_doc/_mget?_source=name,age
+{
+  "ids":[1,2,3,4]
+}
+
+```
+
+
+
+### 27
+
+bulk
+
+任意一个操作失败 不会影响到其他的 会在返回值中告诉哪个失败了
+
+```json
+POST /lib8/_doc/_bulk
+{"delete":{"_id":10}}
+{"update":{"_id":3}}
+{"doc":{"age":24}}
+```
+
+### 29
+
+document 路由
+
+1）document路由到shard上是什么意思？
+
+（2）路由算法：shard = hash(routing) % number_of_primary_shards
+
+默认的routing就是_id
+也可以在发送请求的时候，手动指定一个routing value，比如说put /index/type/id?routing=user_id
+
+手动指定routing value是很有用的，可以保证说，某一类document一定被路由到一个shard上去，那么在后续进行应用级别的负载均衡，以及提升批量读取的性能的时候，是很有帮助的
+
+### 30
+
+协调节点
 
