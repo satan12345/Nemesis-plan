@@ -208,27 +208,27 @@ public class WindowsCondition implements Condition {
 
 给容器中注册组件:
 
- 1.  包扫描+组件标注注解(@Controller @Service @Repository @Component  (通常自己写的组件)
+  1.  包扫描+组件标注注解(@Controller @Service @Repository @Component  (通常自己写的组件)
 
- 2.  @Bean【导入第三方包里的组件】
+  2.  @Bean【导入第三方包里的组件】
 
- 3.  @Import [快速给容器中导入组件]
+  3.  @Import [快速给容器中导入组件]
 
-      	1. @import(要导入到容器中的组件):容器中就会自动注册这个组件 id默认是全类名
-      	2. ImportSelector:返回需要导入的组件全类名数组
-      	3. ImportBeanDefinitionRegistrar:手工注册bean到容器中
+       1. @import(要导入到容器中的组件):容器中就会自动注册这个组件 id默认是全类名
+         2. ImportSelector:返回需要导入的组件全类名数组
+         3. ImportBeanDefinitionRegistrar:手工注册bean到容器中
 
-	4. 使用Spring提供的FactoryBean
+       2. 使用Spring提供的FactoryBean
 
-    	1. 默认获取到的工厂bean调用getObject创建对象
-    	2. 要获取工厂Bean本身 我们需要给id前面添加一个&
+         1. 默认获取到的工厂bean调用getObject创建对象
+         2. 要获取工厂Bean本身 我们需要给id前面添加一个&
 
-    ```java
+    ​```java
     //@Import导入组件 id默认是组件的全类名
     @Import({Color.class, Red.class, MyImportSelector.class})
-    ```
-
-    ```java
+    ​```
+    
+    ​```java
     public class MyImportSelector implements ImportSelector {
         /**
          *
@@ -237,13 +237,13 @@ public class WindowsCondition implements Condition {
          */
         @Override
         public String[] selectImports(AnnotationMetadata importingClassMetadata) {
-
+    
             return new String[]{Green.class.getName(), Bule.class.getName()};
         }
     }
-    ```
-
-    ```java
+    ​```
+    
+    ​```java
     @Slf4j
     public class MyImportBeanDefinitionRegistrar implements ImportBeanDefinitionRegistrar {
         /**
@@ -261,8 +261,8 @@ public class WindowsCondition implements Condition {
             registry.registerBeanDefinition("rainBow",beanDefinition);
         }
     }
-    ```
-
+    ​```
+    
     ###
 
 ```java
@@ -809,9 +809,14 @@ AnnotationAwareAspectJAutoProxyCreator.initBeanFactory
 
 ​					1.invokeAwareMethods:处理Aware接口的回调
 
+​					2 applyBeanPostProcessorsBeforeInitialization：应用后置处理器的postProcessBeforeInitialization方法 
 
+​					3invokeInitMethods :执行初始化方法
 
-​		
+​					4 applyBeanPostProcessorsAfterInitialization():执行后置处理器的postProcessAfterInitialization方法
 
+​		4  this.aspectJAdvisorFactory = new ReflectiveAspectJAdvisorFactory(beanFactory);
 
+​		this.aspectJAdvisorsBuilder =      new BeanFactoryAspectJAdvisorsBuilderAdapter(beanFactory, this.aspectJAdvisorFactory);
 
+​		7 把BeanPostProcessor 注册到BeanFactory中
