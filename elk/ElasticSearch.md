@@ -4142,6 +4142,7 @@ document 路由
 （2）路由算法：shard = hash(routing) % number_of_primary_shards
 
 默认的routing就是_id
+
 也可以在发送请求的时候，手动指定一个routing value，比如说put /index/type/id?routing=user_id
 
 手动指定routing value是很有用的，可以保证说，某一类document一定被路由到一个shard上去，那么在后续进行应用级别的负载均衡，以及提升批量读取的性能的时候，是很有帮助的
@@ -4149,4 +4150,24 @@ document 路由
 ### 30
 
 协调节点
+
+### 31
+
+quorum
+
+#### 34
+
+timeout
+
+GET /lib8/_search?timeout=10ms
+
+### 35
+
+掌握q=field:search content的语法，还有一个是掌握+和-的含义
+
+_copyto
+
+
+
+
 
