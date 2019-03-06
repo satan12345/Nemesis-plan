@@ -466,5 +466,352 @@ public class Boss {
 
 ​	自定义组件实现xxxAware: 在创建对象的时候 会调用接口规定的方法注入相关组件：Aware
 
+​	把Spring底层的一些组件注入到自定义组件中
+
+​	xxxAware:功能使用xxxProcessor
+
+​		applicationConextAware===>ApplicationContextAwareProcessor
+
+### Profile
+
+Spring为我们提供可以根据当前环境 动态激活和切换一些列组件的功能:
+
+指定组件在哪个环境的情况下才能被注册到容器中 不指定 任何环境都能注册到这个组件
+
+加了环境标识的bean 只有这个环境被激活的时候才能注册到容器中  默认是default
+
+写在配置类上 只有指定环境的时候 整个配置类里面的所有配置才能开始生效
+
+@Profile("dev")
+
+@Profile("prod")
+
+
+
+```java
+@Configuration
+public class ProfileConfig {
+
+    @Bean
+    @Profile("default")
+    public Car car(){
+        return new Car();
+    }
+
+    @Bean
+    @Profile("dev")
+    public Bule bule(){
+        return new Bule();
+    }
+
+
+}
+```
+
+使用命令行动态参数：
+
+-Dspring.profiles.active=dev
+
+使用代码
+
+```java
+   @Before
+    public void  init(){
+       // applicationContext=new AnnotationConfigApplicationContext(ProfileConfig.class);
+        //创建 applicationContext
+        applicationContext=new AnnotationConfigApplicationContext();
+        //设置需要激活的环境
+        applicationContext.getEnvironment().setActiveProfiles("dev");
+        //注册主配置类
+        applicationContext.register(ProfileConfig.class);
+        //刷新启动容器
+        applicationContext.refresh();
+    }
+```
+
+### AOP
+
+​	动态代理
+
+指在程序运行期间动态的将某段代码切入到指定方法的指定位置进行运行的编程方式
+
+​	1.导入aop模块:spring-aop:(spring-aspect)
+
+​	2.定义一个业务逻辑类(MatchCalculaotr):在业务逻辑运行的时候将日志进行打印（方法之前 方法运行结束 方法出现异常）
+
+```java
+public class MathCalculator {
+}
+
+```
+
+
+
+​	3 定义一个日志切面类 切面里的方法需要动态感知业务运行到哪里 然后执行
+
+​			通知方法：
+
+			>前置通知：@Before 目标方法运行之前执行
+			>
+			>后置通知：@After 目标方法运行之后运行
+			>
+			>返回通知：@AfterRetuining 目标方法正常返回之后运行
+			>
+			>异常通知：@AfterThrowing在目标方法运行异常之后运行
+			>
+			>环绕通知:@Around 动态代理，手动推进目标方法运行(joinPoint.process())
+
+4 给切面类的目标方法标注何时何地运行（通知注解）
+
+```java
+@Aspect
+public class LogAspects {
+    /**
+     * 抽取公共切入点表达式
+     * 1 本类引用:只要方法名
+     * 2 其他切面引用:需要指定全类名
+     */
+    @Pointcut("execution(* com.able.springannocation.aop.*.*(..))")
+    public void pointCut(){
+
+    }
+    @Before("pointCut()")
+    public void logStart(){
+
+    }
+    @After("pointCut()")
+    public void  logEnd(){
+
+    }
+    @AfterReturning("pointCut()")
+    public void logReturn(){
+
+    }
+    @AfterThrowing("pointCut()")
+    public void logException(){
+
+    }
+}
+```
+
+
+
+5 将切面类和业务逻辑类（目标方法所在类）都加入到容器中
+
+```java
+@Configuration
+public class AOPConfig {
+
+    @Bean
+    public MathCalculator mathCalculator(){
+        return new MathCalculator();
+    }
+
+    @Bean
+    public LogAspects logAspects(){
+        return new LogAspects();
+    }
+}
+```
+
+
+
+6 告诉Spring那个是切面类:
+
+```java
+@Aspect
+public class LogAspects {
+}
+```
+
+7 给配置类中加 @EnableAspectJAutoProxy 开启基于注解的aop模式
+
+```java
+//开启切面功能
+@EnableAspectJAutoProxy
+@Configuration
+public class AOPConfig {
+
+    @Bean
+    public MathCalculator mathCalculator(){
+        return new MathCalculator();
+    }
+
+    @Bean
+    public LogAspects logAspects(){
+        return new LogAspects();
+    }
+}
+```
+
+
+
+```java
+@Aspect
+@Slf4j
+public class LogAspects {
+    /**
+     * 抽取公共切入点表达式
+     * 1 本类引用:只要方法名
+     * 2 其他切面引用:需要指定全类名
+     */
+    @Pointcut("execution(* com.able.springannocation.aop.*.*(..))")
+    public void pointCut(){
+
+    }
+    @Before("pointCut()")
+    public void logStart(JoinPoint joinPoint){
+        String declaringTypeName = joinPoint.getSignature().getDeclaringTypeName();
+        String methodName = joinPoint.getSignature().getName();
+        Object[] args = joinPoint.getArgs();
+        log.info("logStart=================,类名为:{}方法名为:{},参数为:{}",declaringTypeName,methodName, Arrays.asList(args));
+
+    }
+    @After("pointCut()")
+    public void  logAfter(JoinPoint joinPoint){
+        log.info("logAfter=================");
+    }
+    @AfterReturning(value = "pointCut()",returning = "result")
+    public void logReturn(Object result){
+            log.info("接收到的返回值为:{}",result);
+            log.info("logReturn=======================");
+    }
+    //JoinPoint 一定要出现在参数表的第一位
+    @AfterThrowing(value = "pointCut()",throwing = "exception")
+    public void logException(JoinPoint joinPoint,Exception exception){
+        log.info("exception=",exception);
+        log.info("logException===================================");
+    }
+}
+```
+
+
+
+三步：
+
+​	将业务逻辑与切面类都加入到容器中：告诉Spring 哪个是切面类(@Aspect)
+
+​	在切面类上的每一个通知方法上标注通知注解 告诉Spring何时何地运行（切入点表达式）
+
+​	开启基于注解的apo模式
+
+​					  
+
+### AOP原理 【看给容器中注册了什么组件 这个组件什么时候工作 组件的功能是什么 】
+
+@EnableAspectJAutoProxy：
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Import(AspectJAutoProxyRegistrar.class)
+public @interface EnableAspectJAutoProxy {
+
+	/**
+	 * Indicate whether subclass-based (CGLIB) proxies are to be created as opposed
+	 * to standard Java interface-based proxies. The default is {@code false}.
+	 */
+	boolean proxyTargetClass() default false;
+
+	/**
+	 * Indicate that the proxy should be exposed by the AOP framework as a {@code ThreadLocal}
+	 * for retrieval via the {@link org.springframework.aop.framework.AopContext} class.
+	 * Off by default, i.e. no guarantees that {@code AopContext} access will work.
+	 * @since 4.3.1
+	 */
+	boolean exposeProxy() default false;
+
+}
+```
+
+​					
+
+通过注解EnableAspectJAutoProxy 给容器中导入AspectJAutoProxyRegistrar这个组件
+
+利用 AspectJAutoProxyRegistrar自定义给容器中注册bean 
+
+​	org.springframework.aop.config.internalAutoProxyCreator :org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator
+
+```java
+@Nullable
+	private static BeanDefinition registerOrEscalateApcAsRequired(
+			Class<?> cls, BeanDefinitionRegistry registry, @Nullable Object source) {
+
+		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+
+		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
+			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
+			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
+				int requiredPriority = findPriorityForClass(cls);
+				if (currentPriority < requiredPriority) {
+					apcDefinition.setBeanClassName(cls.getName());
+				}
+			}
+			return null;
+		}
+
+		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
+		beanDefinition.setSource(source);
+		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);
+		beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
+		registry.registerBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME, beanDefinition);
+		return beanDefinition;
+	}
+```
+
+
+
+```java
+AnnotationAwareAspectJAutoProxyCreator
+	->AspectJAwareAdvisorAutoProxyCreator
+		->AbstractAdvisorAutoProxyCreator
+			->AbstractAutoProxyCreator
+				implements SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware
+					关注后置处理器（在bean初始化完成前后做的事情） 自动注入beanFactory
+		AbstractAutoProxyCreator.setBeanFactory
+		AbstractAutoProxyCreator.有后置处理器的逻辑
+		
+		AbstractAdvisorAutoProxyCreator.setBeanFactory-->initBeanFactory
+
+	
+AnnotationAwareAspectJAutoProxyCreator.initBeanFactory
+		
+				
+```
+
+流程：
+
+​	1 传入配置类 创建IOC容器		
+
+​	2 注册配置类  调用refresh()刷新容器
+
+​	3 registerBeanPostProcessors(beanFactory) 注册bean 的后置处理器来方便拦截bean的创建
+
+​		1 先获取ioc容器中已经定义了的需要创建对象的所有BeanPostProcessor
+
+​		2 给容器中添加别的BeanPostProcessor 
+
+​		3 优先注册实现了 PriorityOrdered接口的BeanPostProcessor
+
+​		4 再给容器中注册实现了Ordered接口的BeanPostProcessor
+
+​		5  注册没有实现上面两个接口BeanPostProcesor
+
+​		6 注册BeanPostProcessor 实际上就是创建BeanPostProcessor对象 保存在容器中
+
+​			1 创建bean实例
+
+​			2 populateBean(beanName, mbd, instanceWrapper)；给bean的属性赋值
+
+​			3 initializeBean 初始化bean :
+
+​					1.invokeAwareMethods:处理Aware接口的回调
+
+
+
+​		
+
 
 
