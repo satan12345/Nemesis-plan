@@ -3,6 +3,9 @@ package com.able.springannocation.config;
 import com.able.springannocation.bean.Red;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.env.ConfigurableEnvironment;
+
+import javax.annotation.Resource;
 
 /**
  * @author jipeng
@@ -100,6 +103,9 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @ComponentScan(basePackages = {"com.able.springannocation.ext"})
 public class ExtConfig {
+
+    @Resource
+    ConfigurableEnvironment environment;
 
     @Bean
     public Red red(){
