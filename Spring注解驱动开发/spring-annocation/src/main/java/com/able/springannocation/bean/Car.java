@@ -12,7 +12,7 @@ import javax.annotation.PreDestroy;
  * @date 2019-03-01 16:53
  * @description
  */
-@Component
+//@Component
 public class Car implements InitializingBean, DisposableBean {
 
     public Car() {

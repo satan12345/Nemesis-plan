@@ -11,10 +11,10 @@ import org.springframework.context.annotation.PropertySource;
  * @date 2019-03-02 14:58
  * @description
  */
-@Configuration
-@PropertySource({
-        "classpath:application.properties"
-})
+//@Configuration
+//@PropertySource({
+//        "classpath:application.properties"
+//})
 public class PropertyConfig {
     @Bean
     public Person person(){

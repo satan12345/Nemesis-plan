@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * @date 2019-03-02 16:28
  * @description
  */
-@Component
+//@Component
 public class Boss {
 
 

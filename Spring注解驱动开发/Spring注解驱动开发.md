@@ -208,21 +208,21 @@ public class WindowsCondition implements Condition {
 
 给容器中注册组件:
 
-  1.  包扫描+组件标注注解(@Controller @Service @Repository @Component  (通常自己写的组件)
+    1.  包扫描+组件标注注解(@Controller @Service @Repository @Component  (通常自己写的组件)
 
-  2.  @Bean【导入第三方包里的组件】
+    2.  @Bean【导入第三方包里的组件】
 
-  3.  @Import [快速给容器中导入组件]
+    3.  @Import [快速给容器中导入组件]
 
        1. @import(要导入到容器中的组件):容器中就会自动注册这个组件 id默认是全类名
          2. ImportSelector:返回需要导入的组件全类名数组
          3. ImportBeanDefinitionRegistrar:手工注册bean到容器中
-
+    
        2. 使用Spring提供的FactoryBean
-
+    
          1. 默认获取到的工厂bean调用getObject创建对象
          2. 要获取工厂Bean本身 我们需要给id前面添加一个&
-
+    
     ​```java
     //@Import导入组件 id默认是组件的全类名
     @Import({Color.class, Red.class, MyImportSelector.class})
@@ -820,3 +820,179 @@ AnnotationAwareAspectJAutoProxyCreator.initBeanFactory
 ​		this.aspectJAdvisorsBuilder =      new BeanFactoryAspectJAdvisorsBuilderAdapter(beanFactory, this.aspectJAdvisorFactory);
 
 ​		7 把BeanPostProcessor 注册到BeanFactory中
+
+​	4 finishBeanFactoryInitialization(beanFactory) 完成benaFactory初始化工作 完成剩下的单实例bean
+
+​		1 遍历容器中所有的bean  依次创建对象：getBean(beanName)
+
+​			getBean-->doGetBean-->getSingleton
+
+​		2 创建Bean
+
+​		AnnotationAwareAspectJAutoProxyCreator在所有bean创建之前会有一个拦截：InstantiationAwareBeanPostProcessor 
+
+​			1 先从缓存中获取当前bean  如果能获取到 说明bean之前被创建过 直接使用 否则再创建 只要创建好的bean都会被缓存起来
+
+​			2 createBean 创建bean
+
+​			BeanPostProcessor是bean对象创建完成初始化前后调用的
+
+​			InstantiationAwareBeanPostProcessor 是在创建bean实例之前先尝试用后置处理器返回对象的
+
+​				1.resolveBeforeInstantiation //希望后置处理器在此能返回一个代理对象  如果能返回对象就使用 如果不能就继续。
+
+​					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+
+​					bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+
+​	Object beanInstance = doCreateBean(beanName, mbdToUse, args);真正去创建一个bean实例
+
+AnnotationAwareAspectJAutoProxyCreator的【InstantiationAwareBeanPostProcessor 】作用
+
+​	1 每个bean创建之前 调用postProcessBeforeInstantiation():
+
+​		关心MathCalculator 和LogAspect的创建
+
+​			1 判断当前bean是否在adviseBeans中(保存了所有需要增强bean)
+
+​			2 判断当前bean是否是基础类型：
+
+​				boolean retVal = Advice    Pointcut    Advisor      AopInfrastructureBean
+
+​			或者是否是切面(Aspect)
+
+​			3 是否需要跳过
+
+​				获取候选的增强器（切面里的通知方法） List<Advisor> candidateAdvisors
+
+​				I。每一个封装的通知方法的增强器为：InstantiationModelAwarePointcutAdvisor
+
+​				判断每个增强器的类型是否为AspectJPointcutAdvisor 返回true
+
+​				2 。永远返回false
+
+​	创建对象
+
+​		postProcessAfterInitialization
+
+​			return wrapIfNecessary(bean, beanName, cacheKey);
+
+​			1 获取当前bean的所有增强器 ：Object[] specificInterceptors
+
+​				1 获取当前bean 的所有增强器（通知方法）
+
+​				2 找到能在当前bean使用的增强器（找到那些通知方法是需要切入当前bean方法的）
+
+​				3 给增强器排序
+
+​			2 保存当前bean 在advisedBeans 中 
+
+​			3.Object proxy = createProxy(      bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean)); 为当前bean的代理对象
+
+​			1 获取所有增强器(通知方法)
+
+​			2 保存到proxyFactory
+
+​			3 创建代理对象
+
+​					JdkDynamicAopProxy  jdk的动态代理
+
+​					ObjenesisCglibAopProxy  cglib动态代理
+
+​			4 给容器中返回当前组件使用cglib增强了的代理对象
+
+​			5 以后容器获取到的就是这个组件的代理对象 代理对象就会执行通知方法的流程
+
+
+
+```
+* BeanPostProcessor:bean的后置处理器 bean 创建对象初始化前后进行拦截工作的
+* BeanFactoryPostProcessor:beanFactory的后置处理器 ：
+*            在beanFactory标准初始化之后调用
+*            所有的bean定义已经保存加载到beanFactory中 但是bean的实例还未创建
+*   流程:
+*         IOC容器创建
+*         执行invokeBeanFactoryPostProcessors
+*         如何知道所有的BeanFactoryPostProcessor并执行他们的方法：
+*         1.String[] postProcessorNames =
+*           beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
+*        直接在beanFactory中找到所有的类型为 BeanFactoryPostProcessor的组件 并执行他们的方法
+*         2 在初始创建其他组件前面执行
+*BeanDefinitionRegistryPostProcessor:bean定义注册后置处理器
+*  BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor
+*  在所有的bean定义信息将要被加载 bean实例还没有创建 可以利用他给容器中额外添加组件
+*      优先于BeanFactoryPostProcessor 的执行
+*   流程 ：
+*      IOC容器创建
+*      refresh();方法调用
+*      invokeBeanFactoryPostProcessors(beanFactory);的方法调用
+*      postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
+*      从容器中获取BeanDefinitionRegistryPostProcessor类型的所有组件
+*      1 依次循环触发BeanDefinitionRegistryPostProcessor的postProcessBeanDefinitionRegistry的方法
+*      2 在来循环触发BeanFactoryPostProcessor的postProcessBeanFactory方法
+*
+*      在从文档中找到 BeanFactoryPostProcessor
+*      String[] postProcessorNames =
+*           beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
+*        然后触发   postProcessBeanFactory方法
+*
+*
+*
+*   ApplicationListener:监听容器中法的时间。事件驱动模型开发
+*          ApplicationListener<E extends ApplicationEvent> extends EventListener
+*          监听ApplicationEvent及其下面的子事件
+*     步骤：
+*          写一个监听器来监（ApplicationListener的实现类）听某个事件（ApplicationEvent及其子类）
+*          @EventListener
+*          @EventListener(classes = {ApplicationEvent.class})
+*          public void listener(ApplicationEvent applicationEvent){
+*
+*          }
+*          原理：
+*              EventListenerMethodProcessor
+*              SmartInitializingSingleton原理：
+*                  1 ioc容器创建对象并refresh()
+*                  2 初始化所有剩下的单实例bean  finishBeanFactoryInitialization(beanFactory);
+*                         1 先创建所有的单实例bean
+*                         2 获取所有创建好的单实例bean 判断是否实现了 SmartInitializingSingleton这个接口
+*                          如果是 则调用afterSingletonsInstantiated这个方法
+*
+*          把监听器加入到容器
+*          只要容器中有相应的事件发布 我们就能监听到这个事件
+*              1 ContextRefreshedEvent：容器刷新完成（所有bean都完全创建）会发布这个事件
+*
+*              2 自己发布事件
+*              3 容器关闭会发布事件 ContextClosedEvent
+    *
+*
+*         发布一个事件
+*       原理: 1 容器创建对象：refresh();
+*            2 容器刷新完成：finishRefresh();
+*                  发布事件 容器刷新完成：publishEvent(new ContextRefreshedEvent(this));
+*
+*
+*              事件发布流程：
+*                  getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);
+*                  获取事件的多播器(派发器)
+*                  multicastEvent 派发事件
+*                  getApplicationListeners(event, type)获取所有的指定事件监听器
+*                  如果有executor 则可以进行异步派发 否则同步的方式直接执行
+*                  invokeListener(listener, event) 拿到listener回调onApplicationEvent方法
+*           applicationEventMulticaster【事件派发器】
+*             initApplicationEventMulticaster();初始化applicationEventMulticaster
+*             先去容器中寻找id为applicationEventMulticaster的组件
+*             如果没有 则创建并添加到容器中取
+*              this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+*        beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
+*     容器中有哪些监听器
+*     1 容器创建对象:refresh();
+*     2 registerListeners();
+*     从容器中拿到所有的监听器 吧他们添加到ApplicationEventMulticaster中去
+*     String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
+*     for (String listenerBeanName : listenerBeanNames) {
+*        getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
+*     }
+```
+
+​			
+

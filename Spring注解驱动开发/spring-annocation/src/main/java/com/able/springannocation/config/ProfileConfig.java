@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
  * @date 2019-03-05 11:10
  * @description
  */
-@Configuration
+//@Configuration
 public class ProfileConfig {
 
     @Bean

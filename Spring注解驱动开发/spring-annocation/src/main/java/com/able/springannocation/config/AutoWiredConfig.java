@@ -42,8 +42,8 @@ import org.springframework.context.annotation.Configuration;
  *
  *
  */
-@Configuration
-@ComponentScan(basePackages = {"com.able.springannocation.bean"})
+//@Configuration
+//@ComponentScan(basePackages = {"com.able.springannocation.bean"})
 public class AutoWiredConfig {
 
     @Bean

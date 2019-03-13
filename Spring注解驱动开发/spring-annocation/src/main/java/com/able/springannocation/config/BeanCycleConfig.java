@@ -34,10 +34,10 @@ import org.springframework.context.annotation.Configuration;
  *      多实例：容器不会管理这个bean 不会调用销毁方法
  *
  */
-@Configuration
-@ComponentScan(basePackages = {
-        "com.able.springannocation.processor"
-})
+//@Configuration
+//@ComponentScan(basePackages = {
+//        "com.able.springannocation.processor"
+//})
 public class BeanCycleConfig {
     @Bean(initMethod ="init",destroyMethod = "destory")
     public Car car(){

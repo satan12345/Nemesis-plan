@@ -11,8 +11,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  * @date 2019-03-05 12:18
  * @description
  */
-@EnableAspectJAutoProxy
-@Configuration
+//@EnableAspectJAutoProxy
+//@Configuration
 public class AOPConfig {
 
     @Bean

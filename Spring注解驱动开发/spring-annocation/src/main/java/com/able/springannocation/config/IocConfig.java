@@ -29,7 +29,7 @@ import org.springframework.context.annotation.*;
 //                @ComponentScan.Filter(type = FilterType.CUSTOM,classes = {MyTypeFilter.class})
 //        },useDefaultFilters = false
 //)
-@Import({Color.class, Red.class, MyImportSelector.class, MyImportBeanDefinitionRegistrar.class})
+//@Import({Color.class, Red.class, MyImportSelector.class, MyImportBeanDefinitionRegistrar.class})
 public class IocConfig {
     /**
      * 方法名可以作为bean的id 也可以使用 @Bean的value属性
