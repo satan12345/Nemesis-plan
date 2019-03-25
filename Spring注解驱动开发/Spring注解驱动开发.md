@@ -1170,6 +1170,76 @@ AnnotationAwareAspectJAutoProxyCreator的【InstantiationAwareBeanPostProcessor 
 
 
 
+=======================================总结==================================
+
+1 spring容器在启动的时候 会先保存所有的注册进来的bean的定义信息
+
+​	xml注册   注解注册
+
+2 spring容器会在何时的时机创建这些bean
+
+​	1 用到bean的时候 利用getBean创建 ；创建好之后保存在容器中
+
+​	2 统一创建剩下所有bean的时候finishBeanFactoryInitialization
+
+​	3 后置处理器:BeanPostProcessor
+
+​		每一个bean创建完成 都会使用各种后置处理器进行处理 用来增强bean的功能
+
+​	4 事件驱动模型
+
+​	ApplicationListener 事件监听
+
+
+
+@WebServlet
+
+@WebListener
+
+@Webfilter
+
+
+
+1 Servlet容器启动 会扫描当前应用的每一个jar包的ServletContainerInitializer的实现
+
+2 提供ServletContainerInitializer的实现类
+
+​	必须绑定在META-INF/services/javax.servlet.ServletContainerInitializer中
+
+​	文件的内容就是ServletContainerInitializer实现类的全类名
+
+总结：容器在启动应该的时候 会扫描当前应用每一个jar包里面META-INF/services/javax.servlet.ServletContainerInitializer指定的实现类 启动并运行这个实现类的方法
+
+```java
+//容器启动的时候会将@HandlesTypes指定的这个类型下面的子类 子接口传递过来
+@HandlesTypes(BeanPostProcessor.class)
+@Slf4j
+public class MyServletContainerInntializer implements ServletContainerInitializer {
+    /**
+     *
+     * @param set 感兴趣类型的所有子类型
+     * @param servletContext 代表当前web应用的ServletContext 一个web应用 一个servletContext
+     * @throws ServletException
+     */
+    @Override
+    public void onStartup(Set<Class<?>> set, ServletContext servletContext) throws ServletException {
+        log.info("感兴趣的类型为:{}",set);
+    }
+}
+```
+
+
+
+
+
+
+
+​		
+
+
+
+
+
 ​		
 
 
